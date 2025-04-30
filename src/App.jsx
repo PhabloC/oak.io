@@ -5,7 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
-    <Router basename="/oak.io">
+    <Router>
       <div className="bg-[#1E1E2F] h-screen">
         <Routes>
           <Route path="/" element={<Login />} />

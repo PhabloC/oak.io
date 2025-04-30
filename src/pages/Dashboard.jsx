@@ -8,7 +8,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!auth.currentUser) {
-      navigate("/"); // Redireciona para login se não estiver autenticado
+      navigate("/");
     }
   }, []);
 

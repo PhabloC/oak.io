@@ -8,7 +8,6 @@ import Logo from "../assets/Header/logo2.png";
 export default function Login() {
   const navigate = useNavigate();
 
-  // Monitora o estado de autenticação
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -18,7 +17,7 @@ export default function Login() {
         console.log("Nenhum usuário logado");
       }
     });
-    return () => unsubscribe(); // Limpa o listener ao desmontar o componente
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleGoogleLogin = async () => {
