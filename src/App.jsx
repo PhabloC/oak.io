@@ -5,7 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <div className="bg-[#1E1E2F] h-screen">
         <Routes>
           <Route path="/" element={<Login />} />
