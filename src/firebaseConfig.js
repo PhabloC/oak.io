@@ -11,10 +11,6 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-try {
-  const app = initializeApp(firebaseConfig);
-  export const auth = getAuth(app);
-  export const googleProvider = new GoogleAuthProvider();
-} catch (error) {
-  console.error("Erro ao inicializar o Firebase:", error);
-}
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
