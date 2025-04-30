@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -7,18 +8,32 @@ import Logo from "../assets/Header/logo2.png";
 export default function Login() {
   const navigate = useNavigate();
 
+  // Monitora o estado de autenticação
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        console.log("Usuário logado:", user);
+        navigate("/dashboard");
+      } else {
+        console.log("Nenhum usuário logado");
+      }
+    });
+    return () => unsubscribe(); // Limpa o listener ao desmontar o componente
+  }, [navigate]);
+
   const handleGoogleLogin = async () => {
+    console.log("Iniciando login com Google...");
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate("/dashboard"); // Redireciona para o dashboard após o login
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Login bem-sucedido:", result.user);
     } catch (error) {
-      console.error("Erro ao fazer login:", error);
+      console.error("Erro ao fazer login:", error.code, error.message);
     }
   };
 
   return (
     <div className="h-screen flex">
-      <div className="  bg-[#1E1E2F] flex flex-1 flex-col  justify-center gap-4">
+      <div className="bg-[#1E1E2F] flex flex-1 flex-col justify-center gap-4">
         <img className="h-15 w-40" src={Logo} alt="Logo" />
         <h2 className="text-3xl font-bold text-white font-poppins">
           Bem-vindo
