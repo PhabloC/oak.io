@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { auth } from "../../firebaseConfig"; // Certifique-se de que o firebaseConfig está configurado corretamente
+import { auth } from "../../firebaseConfig";
 import { signOut } from "firebase/auth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoHeader from "../../assets/Header/logo2.png";
 
 export default function Header() {
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation(); // Hook para obter a rota atual
+  const location = useLocation();
 
   useEffect(() => {
     // Obtém o usuário autenticado
@@ -16,42 +16,42 @@ export default function Header() {
       setUser(currentUser);
     });
 
-    return () => unsubscribe(); // Limpa o listener ao desmontar o componente
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/"); // Redireciona para a página de login
+      navigate("/");
     } catch (error) {
       console.error("Erro ao sair:", error);
     }
   };
 
   return (
-    <div className="text-white h-16 p-2 flex justify-between items-center pr-10 pl-10 border-b border-gray-700">
+    <header className="text-white h-16 p-2 flex justify-between items-center pr-10 pl-10 border-b border-gray-700">
       <div className="flex items-center space-x-10">
         <img src={LogoHeader} alt="Logo Header" className="h-8 w-20" />
-        <p
-          className={`text-sm font-semibold cursor-pointer font-poppins transition duration-300 ${
+        <Link
+          to="/dashboard"
+          className={`text-sm font-semibold font-poppins transition duration-300 ${
             location.pathname === "/dashboard"
               ? "text-purple-700"
               : "hover:text-purple-700"
           }`}
-          onClick={() => navigate("/dashboard")}
         >
           Dashboard
-        </p>
-        <p
-          className={`text-sm font-semibold cursor-pointer font-poppins transition duration-300 ${
+        </Link>
+        <Link
+          to="/transacoes"
+          className={`text-sm font-semibold font-poppins transition duration-300 ${
             location.pathname === "/transacoes"
               ? "text-purple-700"
               : "hover:text-purple-700"
           }`}
-          onClick={() => navigate("/transacoes")}
         >
           Transações
-        </p>
+        </Link>
       </div>
       <div className="relative">
         {user ? (
@@ -84,6 +84,6 @@ export default function Header() {
           </button>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

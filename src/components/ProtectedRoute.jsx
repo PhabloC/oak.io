@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }) {
         setUser(currentUser);
       } else {
         setUser(null);
-        navigate("/"); // Redireciona para login se não estiver autenticado
+        navigate("/");
       }
       setLoading(false);
     });
@@ -22,8 +22,8 @@ export default function ProtectedRoute({ children }) {
   }, [navigate]);
 
   if (loading) {
-    return <div className="text-white">Carregando...</div>; // Componente de carregamento
+    return <div className="text-white">Carregando...</div>;
   }
 
-  return user ? children : null; // Renderiza os filhos se o usuário estiver autenticado
+  return user ? children : null;
 }

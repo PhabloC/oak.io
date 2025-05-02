@@ -4,6 +4,7 @@ import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Banner from "../assets/banner.jpg";
 import Logo from "../assets/Header/logo2.png";
+import Google from "../assets/google.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -31,18 +32,29 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen flex">
-      <div className="bg-[#1E1E2F] flex flex-1 flex-col justify-center gap-4">
-        <img className="h-15 w-40" src={Logo} alt="Logo" />
+    <div className="h-screen flex w-full">
+      <div className="bg-[#1E1E2F] flex flex-1 flex-col justify-center gap-6 items-center ">
+        <img className="h-20 w-45" src={Logo} alt="Logo" />
         <h2 className="text-3xl font-bold text-white font-poppins">
           Bem-vindo
         </h2>
-        <p></p>
+        <p
+          className="text-lg text-gray-400 text-center font-poppins
+        w-[450px]"
+        >
+          Gerencie suas finanças com simplicidade e segurança. Bem-vindo à sua
+          jornada de controle financeiro!
+        </p>
         <button
           onClick={handleGoogleLogin}
-          className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-600 transition"
+          className="flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
         >
-          Login com Google
+          <img
+            className="w-6 h-6 inline-block mr-3"
+            src={Google}
+            alt="Google Logo"
+          />
+          <span className="font-semibold text-lg">Login com Google</span>
         </button>
       </div>
       <div className="flex-1">
