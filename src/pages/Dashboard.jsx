@@ -24,7 +24,7 @@ export default function Dashboard() {
       {/* Renderiza o Sidebar apenas nas rotas especificadas */}
       <div className="flex-1">
         <Header />
-        <div className="p-4">
+        <div className="p-4 ml-28 mt-8">
           <h1>Bem-vindo ao Dashboard!</h1>
         </div>
       </div>
