@@ -13,7 +13,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="text-white h-16 p-4 flex justify-end items-center bg-[#1E1E2F] border-b border-gray-700">
+    <header className="text-white h-16 p-4 flex justify-end items-center bg-[#1E1E2F] border-b border-blue-800">
       {user ? (
         <div className="flex items-center space-x-3">
           <img
