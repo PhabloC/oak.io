@@ -21,7 +21,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="bg-indigo-950 text-white h-screen w-24 hover:w-64 transition-all duration-300 flex flex-col items-center py-6 border-r border-blue-800 fixed group">
+    <div className="bg-indigo-950 text-white h-screen w-24 hover:w-64 transition-all duration-300 flex flex-col items-center py-6 border-r border-blue-800 fixed group z-50">
       {/* Logo */}
       <img src={LogoHeader} alt="Logo" className="h-8 w-16 mb-8" />
 
@@ -56,7 +56,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Botão de Sair */}
-      <div className="mt-auto w-full ">
+      <div className="mt-auto w-full">
         <button
           onClick={handleLogout}
           className="flex px-4 py-2 w-full text-left rounded-lg hover:bg-gray-700 group justify-center items-center"

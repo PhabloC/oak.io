@@ -24,8 +24,8 @@ export default function Transitions() {
       {/* Renderiza o Sidebar apenas nas rotas especificadas */}
       <div className="flex-1">
         <Header />
-        <div className="p-4">
-          <h1>Bem-vindo à página de Transações!</h1>
+        <div className="p-4 ml-28 mt-8">
+          <h1 className="text-3xl font-bold">Transições</h1>
         </div>
       </div>
     </div>
