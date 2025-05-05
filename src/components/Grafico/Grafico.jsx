@@ -1,4 +1,25 @@
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { Line, Pie } from "react-chartjs-2";
+
+// Registra os componentes necessários
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Tooltip,
+  Legend
+);
 
 export default function Grafico({ lineData, pieData }) {
   return (
