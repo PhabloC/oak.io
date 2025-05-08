@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { auth } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Grafico from "../components/Grafico/Grafico";
@@ -8,26 +9,33 @@ import Cards from "../components/Cards/Cards";
 import Quadro from "../components/Quadro/Quadro";
 import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
+import { useTransactions } from "../context/TransactionsContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedMonth, setSelectedMonth] = useState("Janeiro 2023");
+  const { transactions, setTransactions } = useTransactions(); // Contexto global
+  const [selectedMonth, setSelectedMonth] = useState("Janeiro 2025");
   const [showPopup, setShowPopup] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    saldo: 0,
+    gastos: 0,
+    investimentos: 0,
+  });
 
   const months = [
-    "Janeiro 2025",
-    "Fevereiro 2025",
-    "Março 2025",
-    "Abril 2025",
-    "Maio 2025",
-    "Junho 2025",
-    "Julho 2025",
-    "Agosto 2025",
-    "Setembro 2025",
-    "Outubro 2025",
-    "Novembro 2025",
-    "Dezembro 2025",
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
 
   useEffect(() => {
@@ -39,26 +47,82 @@ export default function Dashboard() {
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
+  // Função para carregar transações do Firestore
+  const loadTransactions = async (month) => {
+    try {
+      const userId = auth.currentUser.uid;
+      const transactionsRef = collection(db, "users", userId, "transactions");
+      const q = query(transactionsRef, where("month", "==", month));
+      const querySnapshot = await getDocs(q);
+
+      const loadedTransactions = [];
+      querySnapshot.forEach((doc) => {
+        loadedTransactions.push({ id: doc.id, ...doc.data() });
+      });
+
+      setTransactions(loadedTransactions); // Atualiza o contexto global
+    } catch (error) {
+      console.error("Erro ao carregar transações:", error);
+    }
+  };
+
+  // Função para calcular os dados do Dashboard
+  const calculateDashboardData = (transactions) => {
+    const saldo = transactions.reduce((acc, t) => acc + t.value, 0);
+    const gastos = transactions
+      .filter((t) => t.type === "Gasto")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const investimentos = transactions
+      .filter((t) => t.type === "Investimento")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+
+    return { saldo, gastos, investimentos };
+  };
+
+  // Atualiza os dados do Dashboard sempre que as transações ou o mês mudarem
+  useEffect(() => {
+    loadTransactions(selectedMonth);
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    const data = calculateDashboardData(transactions);
+    setDashboardData(data);
+  }, [transactions]);
+
+  const handleAddTransaction = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
   const lineData = {
     labels: ["Janeiro", "Fevereiro", "Março"],
     datasets: [
       {
         label: "Ganhos",
-        data: [5000, 7000, 8000],
+        data: transactions
+          .filter((t) => t.type === "Ganho")
+          .map((t) => t.value),
         borderColor: "#4CAF50",
         backgroundColor: "rgba(76, 175, 80, 0.2)",
         tension: 0.4,
       },
       {
         label: "Gastos",
-        data: [2000, 3000, 2500],
+        data: transactions
+          .filter((t) => t.type === "Gasto")
+          .map((t) => t.value),
         borderColor: "#F44336",
         backgroundColor: "rgba(244, 67, 54, 0.2)",
         tension: 0.4,
       },
       {
         label: "Investimentos",
-        data: [1500, 2000, 1800],
+        data: transactions
+          .filter((t) => t.type === "Investimento")
+          .map((t) => t.value),
         borderColor: "#2196F3",
         backgroundColor: "rgba(33, 150, 243, 0.2)",
         tension: 0.4,
@@ -70,18 +134,14 @@ export default function Dashboard() {
     labels: ["Ganhos", "Gastos", "Investimentos"],
     datasets: [
       {
-        data: [5000, 2000, 1500],
+        data: [
+          dashboardData.saldo,
+          dashboardData.gastos,
+          dashboardData.investimentos,
+        ],
         backgroundColor: ["#4CAF50", "#F44336", "#2196F3"],
       },
     ],
-  };
-
-  const handleAddTransaction = () => {
-    setShowPopup(true);
-  };
-
-  const handleClosePopup = () => {
-    setShowPopup(false);
   };
 
   return (
@@ -116,7 +176,11 @@ export default function Dashboard() {
 
           <div className="flex flex-1">
             <div className="flex flex-col gap-8 flex-1">
-              <Cards />
+              <Cards
+                saldo={dashboardData.saldo}
+                gastos={dashboardData.gastos}
+                investimentos={dashboardData.investimentos}
+              />
               <Grafico lineData={lineData} pieData={pieData} />
             </div>
             <Quadro />

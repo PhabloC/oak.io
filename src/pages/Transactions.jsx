@@ -1,52 +1,110 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { auth } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  deleteDoc,
+  addDoc,
+} from "firebase/firestore";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { BsBoxArrowUpRight, BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import ModalEditor from "../components/Modal/ModalEditor";
-import ModalDeleted from "../components/Modal/ModalDeleted"; // Importa corretamente o ModalDeleted
+import ModalDeleted from "../components/Modal/ModalDeleted";
 import { FaTrash } from "react-icons/fa";
+import { useTransactions } from "../context/TransactionsContext";
 
-export default function Transitions() {
+export default function Transactions() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { transactions, setTransactions } = useTransactions();
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [transactions, setTransactions] = useState([
-    {
-      id: 1,
-      title: "Compra no mercado",
-      value: -200,
-      type: "Despesa",
-      method: "Cartão",
-      date: "2023-01-10",
-    },
-    {
-      id: 2,
-      title: "Salário",
-      value: 5000,
-      type: "Receita",
-      method: "Pix",
-      date: "2023-01-10",
-    },
-  ]);
-  const [showConfirmModal, setShowConfirmModal] = useState(false); // Estado para o modal de confirmação
-  const [transactionToDelete, setTransactionToDelete] = useState(null); // Transação a ser deletada
-  const [successMessage, setSuccessMessage] = useState(""); // Mensagem de sucesso
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const currentMonth = new Date().toLocaleString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+
+  const months = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+  ];
 
   useEffect(() => {
     if (!auth.currentUser) {
       navigate("/");
+    } else {
+      loadTransactions(selectedMonth);
     }
-  }, [navigate]);
+  }, [navigate, selectedMonth]);
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      loadTransactions(selectedMonth);
+    }
+  }, [selectedMonth]); // Atualiza automaticamente ao trocar de mês
 
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
-  const handleAddTransaction = () => {
-    setShowPopup(true);
+  const loadTransactions = async (month) => {
+    try {
+      const userId = auth.currentUser.uid;
+      const transactionsRef = collection(db, "users", userId, "transactions");
+      const q = query(transactionsRef, where("month", "==", month));
+      const querySnapshot = await getDocs(q);
+
+      const loadedTransactions = [];
+      querySnapshot.forEach((doc) => {
+        loadedTransactions.push({ id: doc.id, ...doc.data() });
+      });
+
+      setTransactions(loadedTransactions); // Atualiza o estado global
+    } catch (error) {
+      console.error("Erro ao carregar transações:", error);
+    }
+  };
+
+  const handleAddTransaction = async (transaction) => {
+    try {
+      const userId = auth.currentUser.uid;
+      const transactionsRef = collection(db, "users", userId, "transactions");
+
+      // Adiciona o mês selecionado diretamente
+      const newTransaction = { ...transaction, month: selectedMonth };
+      const docRef = await addDoc(transactionsRef, newTransaction);
+
+      // Atualiza o estado global imediatamente
+      setTransactions((prev) => [
+        ...prev,
+        { id: docRef.id, ...newTransaction },
+      ]);
+      setShowPopup(false);
+      setSuccessMessage("Transação adicionada com sucesso!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Erro ao adicionar transação:", error);
+    }
   };
 
   const handleClosePopup = () => {
@@ -61,15 +119,20 @@ export default function Transitions() {
     setSelectedTransaction(null);
   };
 
-  const handleDeleteTransaction = (id) => {
-    const updatedTransactions = transactions.filter((t) => t.id !== id);
-    setTransactions(updatedTransactions);
-    setTransactionToDelete(null);
-    setShowConfirmModal(false);
-    setSuccessMessage(
-      "Transação deletada. A transação foi deletada do sistema."
-    );
-    setTimeout(() => setSuccessMessage(""), 3000); // Remove a mensagem após 3 segundos
+  const handleDeleteTransaction = async (id) => {
+    try {
+      const userId = auth.currentUser.uid;
+      const transactionRef = doc(db, "users", userId, "transactions", id);
+      await deleteDoc(transactionRef);
+
+      setTransactions((prev) => prev.filter((t) => t.id !== id));
+      setTransactionToDelete(null);
+      setShowConfirmModal(false);
+      setSuccessMessage("Transação deletada com sucesso!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Erro ao deletar transação:", error);
+    }
   };
 
   const handleOpenConfirmModal = (transaction) => {
@@ -90,16 +153,28 @@ export default function Transitions() {
         <div className="p-4 ml-28 mt-4">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold">Transações</h1>
-            <button
-              onClick={handleAddTransaction}
-              className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
-            >
-              <BsDatabaseFillAdd className="text-lg" />
-              <span>Adicionar transação</span>
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowPopup(true)}
+                className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
+              >
+                <BsDatabaseFillAdd className="text-lg" />
+                <span>Adicionar transação</span>
+              </button>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-gray-800 text-white p-2 rounded-lg"
+              >
+                {months.map((month) => (
+                  <option key={month} value={month}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Mensagem de Sucesso */}
           {successMessage && (
             <div className="bg-green-600 text-white p-2 rounded-lg mb-4">
               {successMessage}
@@ -145,12 +220,12 @@ export default function Transitions() {
                       </td>
                       <td
                         className={`border border-gray-700 px-4 py-2 ${
-                          transaction.value < 0
+                          transaction.type === "Gasto"
                             ? "text-red-500"
                             : "text-green-500"
                         }`}
                       >
-                        {transaction.value < 0
+                        {transaction.type === "Gasto"
                           ? `- R$ ${Math.abs(transaction.value)}`
                           : `+ R$ ${transaction.value}`}
                       </td>
@@ -173,20 +248,22 @@ export default function Transitions() {
         </div>
       </div>
 
-      {/* Modal de Adicionar Transação */}
-      {showPopup && <ModalTransacao onClose={handleClosePopup} />}
+      {showPopup && (
+        <ModalTransacao
+          onClose={handleClosePopup}
+          onSave={handleAddTransaction}
+        />
+      )}
 
-      {/* Modal de Edição */}
       {selectedTransaction && (
         <ModalEditor
           transaction={selectedTransaction}
           onClose={handleCloseEditor}
           onDelete={handleDeleteTransaction}
-          onSave={handleSaveTransaction}
+          onSave={loadTransactions}
         />
       )}
 
-      {/* Modal de Confirmação */}
       {showConfirmModal && (
         <ModalDeleted
           onClose={handleCloseConfirmModal}
