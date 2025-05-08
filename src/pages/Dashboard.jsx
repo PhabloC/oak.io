@@ -5,13 +5,15 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Grafico from "../components/Grafico/Grafico";
 import Cards from "../components/Cards/Cards";
-
 import Quadro from "../components/Quadro/Quadro";
+import { BsDatabaseFillAdd } from "react-icons/bs";
+import ModalTransacao from "../components/Modal/ModalTransacao";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedMonth, setSelectedMonth] = useState("Janeiro 2023");
+  const [showPopup, setShowPopup] = useState(false);
 
   const months = [
     "Janeiro 2025",
@@ -34,11 +36,9 @@ export default function Dashboard() {
     }
   }, [navigate]);
 
-  // Verifica se a rota atual é "/dashboard" ou "/transacoes"
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
-  // Dados para os gráficos
   const lineData = {
     labels: ["Janeiro", "Fevereiro", "Março"],
     datasets: [
@@ -76,6 +76,14 @@ export default function Dashboard() {
     ],
   };
 
+  const handleAddTransaction = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
   return (
     <div className="text-white flex overflow-hidden h-screen">
       {showSidebar && <Sidebar />}
@@ -83,37 +91,41 @@ export default function Dashboard() {
         <Header />
         <div className="p-4 ml-28 mt-4 flex flex-col h-full">
           <div className="flex justify-between items-center mb-8">
-            {/* Título */}
             <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-            {/* Dropdown de Mês */}
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-gray-800 text-white p-2 rounded-lg"
-            >
-              {months.map((month) => (
-                <option key={month} value={month}>
-                  {month}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleAddTransaction}
+                className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
+              >
+                <BsDatabaseFillAdd className="text-lg" />
+                <span>Adicionar transação</span>
+              </button>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-gray-800 text-white p-2 rounded-lg"
+              >
+                {months.map((month) => (
+                  <option key={month} value={month}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex flex-1">
-            {/* Coluna com Cards e Gráficos */}
             <div className="flex flex-col gap-8 flex-1">
-              {/* Cards */}
               <Cards />
-
-              {/* Gráficos */}
               <Grafico lineData={lineData} pieData={pieData} />
             </div>
-
-            {/* Quadro de Transações */}
             <Quadro />
           </div>
         </div>
       </div>
+
+      {/* Popup */}
+      {showPopup && <ModalTransacao onClose={handleClosePopup} />}
     </div>
   );
 }
