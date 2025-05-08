@@ -20,16 +20,16 @@ export default function ModalTransacao({ onClose, onSave }) {
 
     const transaction = {
       title,
-      value: parseFloat(value), // Garante que o valor seja numérico
+      value: parseFloat(value),
       type,
       method,
       category,
-      date, // Salva a data fornecida pelo usuário
+      date,
     };
 
     try {
-      await onSave(transaction); // Passa os dados para o método handleAddTransaction
-      onClose(); // Fecha o modal
+      await onSave(transaction);
+      onClose();
     } catch (error) {
       console.error("Erro ao salvar a transação:", error);
     }

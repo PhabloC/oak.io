@@ -1,7 +1,7 @@
 import { useTransactions } from "../../context/TransactionsContext";
 
 export default function Quadro({ selectedMonth }) {
-  const { transactions } = useTransactions(); // Obtém as transações do contexto
+  const { transactions } = useTransactions();
 
   // Filtra as transações com base no mês selecionado
   const filteredTransactions = transactions.filter(

@@ -47,7 +47,7 @@ export default function ModalEditor({
   const handleSaveEdit = async () => {
     const updatedTransaction = {
       title,
-      value: parseFloat(value), // Garante que o valor seja numérico
+      value: parseFloat(value),
       type,
       method,
       date,
@@ -57,9 +57,9 @@ export default function ModalEditor({
       }),
     };
 
-    await editTransaction(transaction.id, updatedTransaction); // Atualiza no Firestore
-    onSave(updatedTransaction); // Atualiza no estado global ou local
-    onClose(); // Fecha o modal
+    await editTransaction(transaction.id, updatedTransaction);
+    onSave(updatedTransaction);
+    onClose();
   };
 
   return (

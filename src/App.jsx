@@ -3,7 +3,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 
 import ProtectedRoute from "./components/ProtectedRoute";
-import { TransactionsProvider } from "./context/TransactionsContext"; // Importe o TransactionsProvider
+import { TransactionsProvider } from "./context/TransactionsContext";
 import Transactions from "./pages/Transactions";
 
 export default function App() {

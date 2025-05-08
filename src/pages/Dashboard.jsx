@@ -14,7 +14,7 @@ import { useTransactions } from "../context/TransactionsContext";
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { transactions, setTransactions } = useTransactions(); // Contexto global
+  const { transactions, setTransactions } = useTransactions();
   const [selectedMonth, setSelectedMonth] = useState("Janeiro 2025");
   const [showPopup, setShowPopup] = useState(false);
   const [dashboardData, setDashboardData] = useState({
@@ -60,7 +60,7 @@ export default function Dashboard() {
         loadedTransactions.push({ id: doc.id, ...doc.data() });
       });
 
-      setTransactions(loadedTransactions); // Atualiza o contexto global
+      setTransactions(loadedTransactions);
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }

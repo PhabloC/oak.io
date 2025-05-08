@@ -62,7 +62,7 @@ export default function Transactions() {
     if (auth.currentUser) {
       loadTransactions(selectedMonth);
     }
-  }, [selectedMonth]); // Atualiza automaticamente ao trocar de mês
+  }, [selectedMonth]);
 
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
@@ -79,7 +79,7 @@ export default function Transactions() {
         loadedTransactions.push({ id: doc.id, ...doc.data() });
       });
 
-      setTransactions(loadedTransactions); // Atualiza o estado global
+      setTransactions(loadedTransactions);
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }

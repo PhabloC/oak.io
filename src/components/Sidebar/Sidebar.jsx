@@ -2,34 +2,49 @@ import { Link, useLocation } from "react-router-dom";
 import LogoHeader from "../../assets/Header/logo2.png";
 import { TbTransitionRightFilled } from "react-icons/tb";
 import { MdDashboard } from "react-icons/md";
-import { IoExit } from "react-icons/io5"; // Importa o ícone de sair
+import { IoExit } from "react-icons/io5";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import Tree from "../../assets/tree.png";
+import { useState } from "react";
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/"); // Redireciona para a página de login
+      navigate("/");
     } catch (error) {
       console.error("Erro ao sair:", error);
     }
   };
 
   return (
-    <div className="bg-indigo-950 text-white h-screen w-24 hover:w-64 transition-all duration-300 flex flex-col items-center py-6 border-r border-blue-800 fixed group z-50">
+    <div
+      className={`bg-indigo-950 text-white h-screen ${
+        isExpanded ? "w-64" : "w-24"
+      } transition-all duration-300 flex flex-col items-center py-6 border-r border-blue-800 fixed group z-50`}
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+    >
       {/* Logo */}
-      <img src={LogoHeader} alt="Logo" className="h-8 w-16 mb-8" />
+      <img
+        src={isExpanded ? LogoHeader : Tree}
+        alt="Logo"
+        className={`transition-all duration-300 mb-8 ${
+          isExpanded ? "h-8 w-16" : "h-8 w-8"
+        }`}
+      />
 
       {/* Conteúdo do Sidebar */}
       <nav className="flex flex-col space-y-4 w-full justify-center items-center">
         <Link
           to="/dashboard"
-          className={`flex items-center px-4 py-2 rounded-lg ${
+          className={`flex items-center px-4 py-2 rounded-lg w-11/12 text-center justify-center ${
             location.pathname === "/dashboard"
               ? "bg-purple-700"
               : "hover:bg-gray-700"
@@ -42,7 +57,7 @@ export default function Sidebar() {
         </Link>
         <Link
           to="/transacoes"
-          className={`flex items-center px-4 py-2 rounded-lg ${
+          className={`flex items-center px-4 py-2 rounded-lg w-11/12 text-center justify-center ${
             location.pathname === "/transacoes"
               ? "bg-purple-700"
               : "hover:bg-gray-700"
