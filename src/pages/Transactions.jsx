@@ -31,7 +31,6 @@ export default function Transactions() {
 
   const currentMonth = new Date().toLocaleString("pt-BR", {
     month: "long",
-    year: "numeric",
   });
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
@@ -51,18 +50,12 @@ export default function Transactions() {
   ];
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      navigate("/");
+    if (auth.currentUser) {
+      loadTransactions(selectedMonth); // Carrega as transações do mês atual
     } else {
-      loadTransactions(selectedMonth);
+      navigate("/"); // Redireciona para a página inicial se o usuário não estiver autenticado
     }
   }, [navigate, selectedMonth]);
-
-  useEffect(() => {
-    if (auth.currentUser) {
-      loadTransactions(selectedMonth);
-    }
-  }, [selectedMonth]);
 
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
@@ -182,15 +175,27 @@ export default function Transactions() {
           )}
 
           <div className="overflow-x-auto mt-8">
-            <table className="w-full border-collapse border border-gray-700 rounded-lg overflow-hidden">
+            <table className="w-full border-separate border-spacing-0 border border-white rounded-lg overflow-hidden">
               <thead>
                 <tr className="bg-gray-800 text-white">
-                  <th className="border border-gray-700 px-4 py-2">Nome</th>
-                  <th className="border border-gray-700 px-4 py-2">Tipo</th>
-                  <th className="border border-gray-700 px-4 py-2">Método</th>
-                  <th className="border border-gray-700 px-4 py-2">Data</th>
-                  <th className="border border-gray-700 px-4 py-2">Valor</th>
-                  <th className="border border-gray-700 px-4 py-2">Ações</th>
+                  <th className="border border-white border-[1px] px-4 py-2 rounded-tl-lg">
+                    Nome
+                  </th>
+                  <th className="border border-white border-[1px] px-4 py-2">
+                    Tipo
+                  </th>
+                  <th className="border border-white border-[1px] px-4 py-2">
+                    Método
+                  </th>
+                  <th className="border border-white border-[1px] px-4 py-2">
+                    Data
+                  </th>
+                  <th className="border border-white border-[1px] px-4 py-2">
+                    Valor
+                  </th>
+                  <th className="border border-white border-[1px] px-4 py-2 rounded-tr-lg">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -204,22 +209,22 @@ export default function Transactions() {
                   transactions.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="hover:bg-gray-700 text-center"
+                      className="text-center hover:bg-gray-600 bg-gray-700"
                     >
-                      <td className="border border-gray-700 px-4 py-2">
+                      <td className="border border-white border-[1px] px-4 py-2">
                         {transaction.title}
                       </td>
-                      <td className="border border-gray-700 px-4 py-2">
+                      <td className="border border-white border-[1px] px-4 py-2">
                         {transaction.type}
                       </td>
-                      <td className="border border-gray-700 px-4 py-2">
+                      <td className="border border-white border-[1px] px-4 py-2">
                         {transaction.method}
                       </td>
-                      <td className="border border-gray-700 px-4 py-2">
-                        {transaction.date}
+                      <td className="border border-white border-[1px] px-4 py-2">
+                        {new Date(transaction.date).toLocaleDateString("pt-BR")}
                       </td>
                       <td
-                        className={`border border-gray-700 px-4 py-2 ${
+                        className={`border border-white border-[1px] px-4 py-2 ${
                           transaction.type === "Gasto"
                             ? "text-red-500"
                             : "text-green-500"
@@ -229,15 +234,19 @@ export default function Transactions() {
                           ? `- R$ ${Math.abs(transaction.value)}`
                           : `+ R$ ${transaction.value}`}
                       </td>
-                      <td className="border border-gray-700 px-4 py-2 flex gap-2 justify-center">
-                        <BsBoxArrowUpRight
-                          className="cursor-pointer text-blue-500"
+                      <td className="flex border border-white border-[1px] px-4 py-2 gap-2 justify-center items-center text-center">
+                        <button
+                          className="p-2"
                           onClick={() => handleOpenEditor(transaction)}
-                        />
-                        <FaTrash
-                          className="cursor-pointer text-red-500"
+                        >
+                          <BsBoxArrowUpRight className="text-blue-500" />
+                        </button>
+                        <button
+                          className="p-2  "
                           onClick={() => handleOpenConfirmModal(transaction)}
-                        />
+                        >
+                          <FaTrash className="text-red-500" />
+                        </button>
                       </td>
                     </tr>
                   ))

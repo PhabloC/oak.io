@@ -45,21 +45,32 @@ export default function ModalEditor({
   }, [transaction]);
 
   const handleSaveEdit = async () => {
+    // Usa a data original se o campo 'date' não foi alterado
+    const transactionDate = date || transaction.date;
+
     const updatedTransaction = {
       title,
       value: parseFloat(value),
       type,
       method,
-      date,
-      month: new Date(date).toLocaleString("pt-BR", {
+      date: transactionDate,
+      month: new Date(transactionDate).toLocaleString("pt-BR", {
         month: "long",
-        year: "numeric",
-      }),
+      }), // Atualiza o campo "month" com o nome do mês
     };
 
     await editTransaction(transaction.id, updatedTransaction);
     onSave(updatedTransaction);
     onClose();
+  };
+
+  const handleDeleteTransaction = async () => {
+    try {
+      await onDelete(transaction.id); // Certifique-se de que 'onDelete' exclui do banco
+      onClose(); // Fecha o modal após a exclusão
+    } catch (error) {
+      console.error("Erro ao deletar transação:", error);
+    }
   };
 
   return (
@@ -133,7 +144,7 @@ export default function ModalEditor({
           </div>
         </form>
         <button
-          onClick={() => onDelete(transaction.id)}
+          onClick={handleDeleteTransaction} // Atualizado para usar a nova função
           className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 flex items-center gap-2 mt-4 w-full justify-center"
         >
           <FaTrash />
