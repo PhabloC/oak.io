@@ -28,30 +28,51 @@ export default function ModalEditor({
 }) {
   // Estados locais para os campos do formulário
   const [title, setTitle] = useState("");
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState("");
   const [type, setType] = useState("Ganho");
   const [method, setMethod] = useState("Boleto");
   const [date, setDate] = useState("");
+
+  // Calcula a data máxima (hoje) no formato YYYY-MM-DD
+  const maxDate = new Date().toISOString().split("T")[0];
 
   // Inicializa os estados com os valores da transação
   useEffect(() => {
     if (transaction) {
       setTitle(transaction.title || "");
-      setValue(transaction.value || 0);
+      setValue(transaction.value || "");
       setType(transaction.type || "Ganho");
       setMethod(transaction.method || "Boleto");
+      // Formata a data para YYYY-MM-DD
       setDate(transaction.date || "");
     }
   }, [transaction]);
 
   const handleSaveEdit = async () => {
-    // Usa a data original se o campo 'date' não foi alterado
-    const transactionDate = date || transaction.date;
+    // Validação dos campos obrigatórios
+    if (!title || !value || !date) {
+      alert("Por favor, preencha todos os campos obrigatórios!");
+      return;
+    }
+
+    // Validação para impedir datas futuras
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normaliza para comparar apenas a data
+    if (selectedDate > today) {
+      alert("Não é possível selecionar datas futuras!");
+      return;
+    }
+
+    // Determina a data a ser salva (formato YYYY-MM-DD)
+    const transactionDate = date;
 
     // Determina o mês com base na data, mantendo o mês original se a data não mudar
     const transactionMonth = date
-      ? new Date(transactionDate).toLocaleString("pt-BR", { month: "long" })
+      ? new Date(date).toLocaleString("pt-BR", { month: "long" })
       : transaction.month;
+    const capitalizedMonth =
+      transactionMonth.charAt(0).toUpperCase() + transactionMonth.slice(1);
 
     const updatedTransaction = {
       title,
@@ -59,8 +80,7 @@ export default function ModalEditor({
       type,
       method,
       date: transactionDate,
-      month:
-        transactionMonth.charAt(0).toUpperCase() + transactionMonth.slice(1), // Capitaliza o mês
+      month: capitalizedMonth,
     };
 
     await editTransaction(transaction.id, updatedTransaction);
@@ -83,7 +103,7 @@ export default function ModalEditor({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-gray-800 p-6 rounded-lg w-[400px] relative">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Editar Transação</h2>
+          <h2 className="text-xl font-bold text-white">Editar Transação</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white text-lg"
@@ -93,16 +113,21 @@ export default function ModalEditor({
         </div>
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Título</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Título
+            </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Valor</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Valor
+            </label>
             <div className="flex items-center">
               <span className="bg-gray-700 text-white p-2 rounded-l-lg">
                 R$
@@ -112,15 +137,21 @@ export default function ModalEditor({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full p-2 rounded-r-lg bg-gray-700 text-white"
+                step="0.01"
+                min="0"
+                required
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Tipo</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Tipo
+            </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              required
             >
               <option value="Ganho">Ganho</option>
               <option value="Gasto">Gasto</option>
@@ -128,7 +159,9 @@ export default function ModalEditor({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Método</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Método
+            </label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
@@ -140,12 +173,16 @@ export default function ModalEditor({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Data</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Data
+            </label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              max={maxDate}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              required
             />
           </div>
         </form>

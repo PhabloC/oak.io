@@ -21,7 +21,7 @@ ChartJS.register(
   Legend
 );
 
-export default function Grafico({ lineData, pieData }) {
+export default function Grafico({ lineData, pieData, selectedMonth }) {
   // Opções para o gráfico de pizza
   const pieOptions = {
     responsive: true,
@@ -32,11 +32,11 @@ export default function Grafico({ lineData, pieData }) {
         labels: {
           color: "#ffffff",
           font: {
-            size: 12,
+            size: 14,
           },
           usePointStyle: true,
           pointStyle: "circle",
-          padding: 12,
+          padding: 20,
         },
       },
       tooltip: {
@@ -81,11 +81,11 @@ export default function Grafico({ lineData, pieData }) {
         labels: {
           color: "#ffffff",
           font: {
-            size: 12,
+            size: 14,
           },
           usePointStyle: true,
           pointStyle: "circle",
-          padding: 12,
+          padding: 20,
         },
       },
       tooltip: {
@@ -98,19 +98,51 @@ export default function Grafico({ lineData, pieData }) {
               2
             )}`;
           },
+          title: (tooltipItems) => {
+            return `Dia ${tooltipItems[0].label} de ${selectedMonth}`;
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: `Transações de ${selectedMonth}`,
+        color: "#ffffff",
+        font: {
+          size: 16,
+        },
+        padding: {
+          top: 10,
+          bottom: 10,
         },
       },
     },
     scales: {
       x: {
+        title: {
+          display: true,
+          text: "Dias do Mês",
+          color: "#ffffff",
+          font: {
+            size: 14,
+          },
+        },
         ticks: {
           color: "#ffffff",
+          maxTicksLimit: 16, // Limita o número de ticks para evitar sobreposição
         },
         grid: {
           color: "rgba(255, 255, 255, 0.1)",
         },
       },
       y: {
+        title: {
+          display: true,
+          text: "Valor (R$)",
+          color: "#ffffff",
+          font: {
+            size: 14,
+          },
+        },
         ticks: {
           color: "#ffffff",
           callback: (value) => `R$ ${value.toFixed(2)}`,

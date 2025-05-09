@@ -19,6 +19,13 @@ import ModalDeleted from "../components/Modal/ModalDeleted";
 import { FaTrash } from "react-icons/fa";
 import { useTransactions } from "../context/TransactionsContext";
 
+// Função para formatar data YYYY-MM-DD para DD/MM/YYYY
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
+};
+
 export default function Transactions() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -222,7 +229,7 @@ export default function Transactions() {
                   transactions.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="text-center hover:bg-gray-600 bg-gray-700"
+                      className="text-center hover:bg-gray-600 Стефан bg-gray-700"
                     >
                       <td className="border border-white border-[1px] px-4 py-2">
                         {transaction.title}
@@ -234,7 +241,7 @@ export default function Transactions() {
                         {transaction.method}
                       </td>
                       <td className="border border-white border-[1px] px-4 py-2">
-                        {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                        {formatDate(transaction.date)}
                       </td>
                       <td
                         className={`border border-white border-[1px] px-4 py-2 ${
@@ -244,8 +251,8 @@ export default function Transactions() {
                         }`}
                       >
                         {transaction.type === "Gasto"
-                          ? `- R$ ${Math.abs(transaction.value)}`
-                          : `+ R$ ${transaction.value}`}
+                          ? `- R$ ${Math.abs(transaction.value).toFixed(2)}`
+                          : `+ R$ ${transaction.value.toFixed(2)}`}
                       </td>
                       <td className="flex border border-white border-[1px] px-4 py-2 gap-2 justify-center items-center text-center">
                         <button

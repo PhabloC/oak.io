@@ -11,6 +11,25 @@ import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import { useTransactions } from "../context/TransactionsContext";
 
+// Função para obter o número de dias em um mês
+const getDaysInMonth = (month, year) => {
+  const monthIndex = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+  ].indexOf(month);
+  return new Date(year, monthIndex + 1, 0).getDate();
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,16 +157,27 @@ export default function Dashboard() {
   };
 
   // Dados para o gráfico de linha
+  const year = new Date().getFullYear(); // Usa o ano atual
+  const daysInMonth = getDaysInMonth(selectedMonth, year);
+  const labels = Array.from({ length: daysInMonth }, (_, i) =>
+    (i + 1).toString()
+  );
+
   const lineData = {
-    labels: [selectedMonth],
+    labels,
     datasets: [
       {
         label: "Ganhos",
-        data: [
+        data: labels.map((day) =>
           transactions
-            .filter((t) => t.type === "Ganho" && t.month === selectedMonth)
-            .reduce((acc, t) => acc + t.value, 0),
-        ],
+            .filter(
+              (t) =>
+                t.type === "Ganho" &&
+                t.month === selectedMonth &&
+                t.date.endsWith(`-${day.padStart(2, "0")}`)
+            )
+            .reduce((acc, t) => acc + t.value, 0)
+        ),
         borderColor: "#4CAF50",
         backgroundColor: "rgba(76, 175, 80, 0.2)",
         tension: 0.4,
@@ -155,11 +185,16 @@ export default function Dashboard() {
       },
       {
         label: "Gastos",
-        data: [
+        data: labels.map((day) =>
           transactions
-            .filter((t) => t.type === "Gasto" && t.month === selectedMonth)
-            .reduce((acc, t) => acc + Math.abs(t.value), 0),
-        ],
+            .filter(
+              (t) =>
+                t.type === "Gasto" &&
+                t.month === selectedMonth &&
+                t.date.endsWith(`-${day.padStart(2, "0")}`)
+            )
+            .reduce((acc, t) => acc + Math.abs(t.value), 0)
+        ),
         borderColor: "#F44336",
         backgroundColor: "rgba(244, 67, 54, 0.2)",
         tension: 0.4,
@@ -167,13 +202,16 @@ export default function Dashboard() {
       },
       {
         label: "Investimentos",
-        data: [
+        data: labels.map((day) =>
           transactions
             .filter(
-              (t) => t.type === "Investimento" && t.month === selectedMonth
+              (t) =>
+                t.type === "Investimento" &&
+                t.month === selectedMonth &&
+                t.date.endsWith(`-${day.padStart(2, "0")}`)
             )
-            .reduce((acc, t) => acc + Math.abs(t.value), 0),
-        ],
+            .reduce((acc, t) => acc + Math.abs(t.value), 0)
+        ),
         borderColor: "#2196F3",
         backgroundColor: "rgba(33, 150, 243, 0.2)",
         tension: 0.4,
@@ -250,7 +288,11 @@ export default function Dashboard() {
                 gastos={dashboardData.gastos}
                 investimentos={dashboardData.investimentos}
               />
-              <Grafico lineData={lineData} pieData={pieData} />
+              <Grafico
+                lineData={lineData}
+                pieData={pieData}
+                selectedMonth={selectedMonth}
+              />
             </div>
             <Quadro selectedMonth={selectedMonth} />
           </div>

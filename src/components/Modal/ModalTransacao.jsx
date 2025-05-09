@@ -7,7 +7,10 @@ export default function ModalTransacao({ onClose, onSave }) {
   const [type, setType] = useState("Ganho");
   const [method, setMethod] = useState("Boleto");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+
+  // Calcula a data máxima (hoje) no formato YYYY-MM-DD
+  const maxDate = new Date().toISOString().split("T")[0];
 
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
@@ -18,13 +21,22 @@ export default function ModalTransacao({ onClose, onSave }) {
       return;
     }
 
+    // Validação para impedir datas futuras
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normaliza para comparar apenas a data
+    if (selectedDate > today) {
+      alert("Não é possível selecionar datas futuras!");
+      return;
+    }
+
     const transaction = {
       title,
       value: parseFloat(value),
       type,
       method,
       category,
-      date,
+      date, // Já está em formato YYYY-MM-DD
     };
 
     try {
@@ -38,23 +50,30 @@ export default function ModalTransacao({ onClose, onSave }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-gray-800 p-6 rounded-lg w-[400px]">
-        <h2 className="text-xl font-bold text-center">Adicionar Transação</h2>
+        <h2 className="text-xl font-bold text-center text-white">
+          Adicionar Transação
+        </h2>
         <p className="mb-4 text-center text-gray-400">
           Insira as informações abaixo:
         </p>
         <form className="space-y-4" onSubmit={handleSaveTransaction}>
           <div>
-            <label className="block text-sm font-medium mb-1">Título</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Título
+            </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
               placeholder="Ex: Compra no mercado"
+              required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Valor</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Valor
+            </label>
             <div className="flex items-center">
               <span className="bg-gray-700 text-white p-2 rounded-l-lg">
                 R$
@@ -65,17 +84,21 @@ export default function ModalTransacao({ onClose, onSave }) {
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full p-2 rounded-r-lg bg-gray-700 text-white"
                 placeholder="Ex: 200"
+                step="0.01"
+                min="0"
+                required
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-white">
               Tipo de Transação
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              required
             >
               <option value="Ganho">Ganho</option>
               <option value="Gasto">Gasto</option>
@@ -83,7 +106,7 @@ export default function ModalTransacao({ onClose, onSave }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-white">
               Método de Pagamento
             </label>
             <select
@@ -97,7 +120,9 @@ export default function ModalTransacao({ onClose, onSave }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Categoria</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Categoria
+            </label>
             <input
               type="text"
               value={category}
@@ -107,12 +132,16 @@ export default function ModalTransacao({ onClose, onSave }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Data</label>
+            <label className="block text-sm font-medium mb-1 text-white">
+              Data
+            </label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              max={maxDate}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              required
             />
           </div>
           <div className="flex justify-end gap-4 mt-4">
