@@ -29,8 +29,8 @@ export default function ModalEditor({
   // Estados locais para os campos do formulário
   const [title, setTitle] = useState("");
   const [value, setValue] = useState(0);
-  const [type, setType] = useState("Despesa");
-  const [method, setMethod] = useState("Cartão");
+  const [type, setType] = useState("Ganho");
+  const [method, setMethod] = useState("Boleto");
   const [date, setDate] = useState("");
 
   // Inicializa os estados com os valores da transação
@@ -38,8 +38,8 @@ export default function ModalEditor({
     if (transaction) {
       setTitle(transaction.title || "");
       setValue(transaction.value || 0);
-      setType(transaction.type || "Despesa");
-      setMethod(transaction.method || "Cartão");
+      setType(transaction.type || "Ganho");
+      setMethod(transaction.method || "Boleto");
       setDate(transaction.date || "");
     }
   }, [transaction]);
@@ -48,26 +48,32 @@ export default function ModalEditor({
     // Usa a data original se o campo 'date' não foi alterado
     const transactionDate = date || transaction.date;
 
+    // Determina o mês com base na data, mantendo o mês original se a data não mudar
+    const transactionMonth = date
+      ? new Date(transactionDate).toLocaleString("pt-BR", { month: "long" })
+      : transaction.month;
+
     const updatedTransaction = {
       title,
       value: parseFloat(value),
       type,
       method,
       date: transactionDate,
-      month: new Date(transactionDate).toLocaleString("pt-BR", {
-        month: "long",
-      }), // Atualiza o campo "month" com o nome do mês
+      month:
+        transactionMonth.charAt(0).toUpperCase() + transactionMonth.slice(1), // Capitaliza o mês
     };
 
     await editTransaction(transaction.id, updatedTransaction);
-    onSave(updatedTransaction);
+
+    // Atualiza o estado no componente pai
+    onSave(updatedTransaction, transaction.id);
     onClose();
   };
 
   const handleDeleteTransaction = async () => {
     try {
-      await onDelete(transaction.id); // Certifique-se de que 'onDelete' exclui do banco
-      onClose(); // Fecha o modal após a exclusão
+      await onDelete(transaction.id);
+      onClose();
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
     }
@@ -116,8 +122,8 @@ export default function ModalEditor({
               onChange={(e) => setType(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
             >
-              <option value="Despesa">Despesa</option>
-              <option value="Receita">Receita</option>
+              <option value="Ganho">Ganho</option>
+              <option value="Gasto">Gasto</option>
               <option value="Investimento">Investimento</option>
             </select>
           </div>
@@ -128,9 +134,9 @@ export default function ModalEditor({
               onChange={(e) => setMethod(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-700 text-white"
             >
-              <option value="Cartão">Cartão</option>
-              <option value="Pix">Pix</option>
               <option value="Boleto">Boleto</option>
+              <option value="Pix">Pix</option>
+              <option value="Cartão">Cartão</option>
             </select>
           </div>
           <div>
@@ -144,7 +150,7 @@ export default function ModalEditor({
           </div>
         </form>
         <button
-          onClick={handleDeleteTransaction} // Atualizado para usar a nova função
+          onClick={handleDeleteTransaction}
           className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 flex items-center gap-2 mt-4 w-full justify-center"
         >
           <FaTrash />

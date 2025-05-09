@@ -29,9 +29,12 @@ export default function Transactions() {
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const currentMonth = new Date().toLocaleString("pt-BR", {
-    month: "long",
-  });
+  // Define o mês atual com a primeira letra maiúscula
+  const currentMonth = new Date()
+    .toLocaleString("pt-BR", {
+      month: "long",
+    })
+    .replace(/^\w/, (c) => c.toUpperCase());
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   const months = [
@@ -51,9 +54,9 @@ export default function Transactions() {
 
   useEffect(() => {
     if (auth.currentUser) {
-      loadTransactions(selectedMonth); // Carrega as transações do mês atual
+      loadTransactions(selectedMonth);
     } else {
-      navigate("/"); // Redireciona para a página inicial se o usuário não estiver autenticado
+      navigate("/");
     }
   }, [navigate, selectedMonth]);
 
@@ -83,11 +86,9 @@ export default function Transactions() {
       const userId = auth.currentUser.uid;
       const transactionsRef = collection(db, "users", userId, "transactions");
 
-      // Adiciona o mês selecionado diretamente
       const newTransaction = { ...transaction, month: selectedMonth };
       const docRef = await addDoc(transactionsRef, newTransaction);
 
-      // Atualiza o estado global imediatamente
       setTransactions((prev) => [
         ...prev,
         { id: docRef.id, ...newTransaction },
@@ -98,6 +99,18 @@ export default function Transactions() {
     } catch (error) {
       console.error("Erro ao adicionar transação:", error);
     }
+  };
+
+  const handleUpdateTransaction = (updatedTransaction, transactionId) => {
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === transactionId
+          ? { id: transactionId, ...updatedTransaction }
+          : t
+      )
+    );
+    setSuccessMessage("Transação atualizada com sucesso!");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const handleClosePopup = () => {
@@ -242,7 +255,7 @@ export default function Transactions() {
                           <BsBoxArrowUpRight className="text-blue-500" />
                         </button>
                         <button
-                          className="p-2  "
+                          className="p-2"
                           onClick={() => handleOpenConfirmModal(transaction)}
                         >
                           <FaTrash className="text-red-500" />
@@ -269,7 +282,7 @@ export default function Transactions() {
           transaction={selectedTransaction}
           onClose={handleCloseEditor}
           onDelete={handleDeleteTransaction}
-          onSave={loadTransactions}
+          onSave={handleUpdateTransaction}
         />
       )}
 
