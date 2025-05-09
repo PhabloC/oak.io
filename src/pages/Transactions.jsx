@@ -79,13 +79,44 @@ export default function Transactions() {
 
       const loadedTransactions = [];
       querySnapshot.forEach((doc) => {
-        loadedTransactions.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        // Verifica se o mês corresponde à data
+        const dateMonth = getMonthName(data.date);
+        const capitalizedDateMonth =
+          dateMonth.charAt(0).toUpperCase() + dateMonth.slice(1);
+        if (data.month !== capitalizedDateMonth) {
+          console.warn(
+            `Mês inconsistente para transação ${doc.id}: date=${data.date}, month=${data.month}, deveria ser ${capitalizedDateMonth}`
+          );
+        }
+        loadedTransactions.push({ id: doc.id, ...data });
       });
 
       setTransactions(loadedTransactions);
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }
+  };
+
+  // Função para obter o nome do mês a partir de uma data YYYY-MM-DD
+  const getMonthName = (dateString) => {
+    const months = [
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro",
+    ];
+    if (!dateString) return "";
+    const [, month] = dateString.split("-");
+    return months[parseInt(month, 10) - 1];
   };
 
   const handleAddTransaction = async (transaction) => {
@@ -229,7 +260,7 @@ export default function Transactions() {
                   transactions.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="text-center hover:bg-gray-600 Стефан bg-gray-700"
+                      className="text-center hover:bg-gray-600 bg-gray-700"
                     >
                       <td className="border border-white border-[1px] px-4 py-2">
                         {transaction.title}

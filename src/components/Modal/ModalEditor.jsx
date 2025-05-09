@@ -3,6 +3,27 @@ import { FaTrash } from "react-icons/fa";
 import { doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig";
 
+// Função para obter o nome do mês a partir de uma data YYYY-MM-DD
+const getMonthName = (dateString) => {
+  const months = [
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
+  ];
+  if (!dateString) return "";
+  const [, month] = dateString.split("-"); // e.g., "2025-05-01" -> "05"
+  return months[parseInt(month, 10) - 1];
+};
+
 const editTransaction = async (transactionId, updatedData) => {
   try {
     const userId = auth.currentUser.uid;
@@ -43,7 +64,6 @@ export default function ModalEditor({
       setValue(transaction.value || "");
       setType(transaction.type || "Ganho");
       setMethod(transaction.method || "Boleto");
-      // Formata a data para YYYY-MM-DD
       setDate(transaction.date || "");
     }
   }, [transaction]);
@@ -58,7 +78,7 @@ export default function ModalEditor({
     // Validação para impedir datas futuras
     const selectedDate = new Date(date);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normaliza para comparar apenas a data
+    today.setHours(0, 0, 0, 0);
     if (selectedDate > today) {
       alert("Não é possível selecionar datas futuras!");
       return;
@@ -67,10 +87,8 @@ export default function ModalEditor({
     // Determina a data a ser salva (formato YYYY-MM-DD)
     const transactionDate = date;
 
-    // Determina o mês com base na data, mantendo o mês original se a data não mudar
-    const transactionMonth = date
-      ? new Date(date).toLocaleString("pt-BR", { month: "long" })
-      : transaction.month;
+    // Determina o mês com base na data
+    const transactionMonth = getMonthName(date);
     const capitalizedMonth =
       transactionMonth.charAt(0).toUpperCase() + transactionMonth.slice(1);
 
