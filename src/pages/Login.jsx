@@ -56,6 +56,20 @@ export default function Login() {
           />
           <span className="font-semibold text-lg">Login com Google</span>
         </button>
+        {/* Mensagem de direitos reservados */}
+        <div className="text-center mt-6">
+          <p className="text-gray-500 text-sm">
+            © 2025 Todos os direitos reservados. Phablo Carvalho
+          </p>
+          <a
+            href="https://github.com/PhabloC"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 text-sm hover:underline"
+          >
+            https://github.com/PhabloC
+          </a>
+        </div>
       </div>
       <div className="flex-1">
         <img className="h-full w-full object-cover" src={Banner} alt="Banner" />
