@@ -71,7 +71,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Botão de Sair */}
-      <div className="mt-auto w-full">
+      <div className="mt-auto w-full p-2">
         <button
           onClick={handleLogout}
           className="flex px-4 py-2 w-full text-left rounded-lg hover:bg-gray-700 group justify-center items-center"
