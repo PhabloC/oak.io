@@ -1,6 +1,6 @@
 # Oak.io - Controle Financeiro
 
-Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tailwind CSS** e **Firebase**. O objetivo principal é fornecer uma plataforma para gerenciar entradas e saídas de capital, além de facilitar o gerenciamento de investimentos.
+Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tailwind CSS**, **Firebase** e **Firestore**. O objetivo principal é fornecer uma plataforma para gerenciar entradas e saídas de capital, além de facilitar o gerenciamento de investimentos.
 
 ## Tecnologias Utilizadas
 
@@ -8,6 +8,7 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
 - **Tailwind CSS**: Framework CSS utilitário para estilização rápida e eficiente.
 - **Vite**: Ferramenta de build rápida para desenvolvimento moderno.
 - **Firebase**: Utilizado para autenticação de usuários com login via Google.
+- **Firestore**: Banco de dados NoSQL para armazenar e gerenciar as transações financeiras.
 - **Vercel**: Plataforma de deploy para hospedar o projeto.
 
 ## Funcionalidades
@@ -15,6 +16,7 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
 - Controle de entradas e saídas de capital.
 - Gerenciamento de investimentos.
 - Login com Google utilizando Firebase.
+- Armazenamento seguro de dados no Firestore.
 - Interface moderna e responsiva.
 
 ## Como Executar o Projeto
@@ -34,7 +36,7 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
 3. Configure as variáveis de ambiente:
 
    - Crie um arquivo `.env.local` na raiz do projeto.
-   - Adicione as credenciais do Firebase:
+   - Adicione as credenciais do Firebase e Firestore:
      ```env
      VITE_FIREBASE_API_KEY=your_api_key
      VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -64,3 +66,6 @@ O projeto está hospedado na Vercel e pode ser acessado pelo seguinte link:
 ## Contato
 
 Se você tiver dúvidas ou sugestões, sinta-se à vontade para entrar em contato!
+
+- **GitHub**: https://github.com/PhabloC
+- **Linkedin**: www.linkedin.com/in/phablo--carvalho
