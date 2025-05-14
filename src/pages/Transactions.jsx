@@ -226,25 +226,25 @@ export default function Transactions() {
           )}
 
           <div className="overflow-x-auto mt-8">
-            <table className="w-full border-separate border-spacing-0 border border-white rounded-lg overflow-hidden">
+            <table className="w-full border-separate border-spacing-0 border border-slate-400 rounded-lg overflow-hidden">
               <thead>
                 <tr className="bg-gray-800 text-white">
-                  <th className="border border-white border-[1px] px-4 py-2 rounded-tl-lg">
+                  <th className="border border-slate-400 border-[1px] px-4 py-2 rounded-tl-lg">
                     Nome
                   </th>
-                  <th className="border border-white border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-4 py-2">
                     Tipo
                   </th>
-                  <th className="border border-white border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-4 py-2">
                     Método
                   </th>
-                  <th className="border border-white border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-4 py-2">
                     Data
                   </th>
-                  <th className="border border-white border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-4 py-2">
                     Valor
                   </th>
-                  <th className="border border-white border-[1px] px-4 py-2 rounded-tr-lg">
+                  <th className="border border-slate-400 border-[1px] px-4 py-2 rounded-tr-lg">
                     Ações
                   </th>
                 </tr>
@@ -262,20 +262,20 @@ export default function Transactions() {
                       key={transaction.id}
                       className="text-center hover:bg-gray-600 bg-gray-700"
                     >
-                      <td className="border border-white border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-4 py-2">
                         {transaction.title}
                       </td>
-                      <td className="border border-white border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-4 py-2">
                         {transaction.type}
                       </td>
-                      <td className="border border-white border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-4 py-2">
                         {transaction.method}
                       </td>
-                      <td className="border border-white border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-4 py-2">
                         {formatDate(transaction.date)}
                       </td>
                       <td
-                        className={`border border-white border-[1px] px-4 py-2 ${
+                        className={`border border-slate-400 border-[1px] px-4 py-2 ${
                           transaction.type === "Gasto"
                             ? "text-red-500"
                             : "text-green-500"
@@ -285,7 +285,7 @@ export default function Transactions() {
                           ? `- R$ ${Math.abs(transaction.value).toFixed(2)}`
                           : `+ R$ ${transaction.value.toFixed(2)}`}
                       </td>
-                      <td className="flex border border-white border-[1px] px-4 py-2 gap-2 justify-center items-center text-center">
+                      <td className="flex border border-slate-400 border-[1px] px-4 py-2 gap-2 justify-center items-center text-center">
                         <button
                           className="p-2"
                           onClick={() => handleOpenEditor(transaction)}

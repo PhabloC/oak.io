@@ -6,7 +6,6 @@ export default function ModalTransacao({ onClose, onSave }) {
   const [value, setValue] = useState("");
   const [type, setType] = useState("Ganho");
   const [method, setMethod] = useState("Boleto");
-  const [category, setCategory] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
   // Calcula a data máxima (hoje) no formato YYYY-MM-DD
@@ -35,7 +34,6 @@ export default function ModalTransacao({ onClose, onSave }) {
       value: parseFloat(value),
       type,
       method,
-      category,
       date, // Já está em formato YYYY-MM-DD
     };
 
@@ -118,18 +116,6 @@ export default function ModalTransacao({ onClose, onSave }) {
               <option value="Pix">Pix</option>
               <option value="Cartão">Cartão</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-white">
-              Categoria
-            </label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
-              placeholder="Ex: Alimentação"
-            />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1 text-white">
