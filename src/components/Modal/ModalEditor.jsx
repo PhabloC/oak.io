@@ -20,7 +20,7 @@ const getMonthName = (dateString) => {
     "dezembro",
   ];
   if (!dateString) return "";
-  const [, month] = dateString.split("-"); // e.g., "2025-05-01" -> "05"
+  const [, month] = dateString.split("-");
   return months[parseInt(month, 10) - 1];
 };
 
@@ -118,10 +118,12 @@ export default function ModalEditor({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-gray-800 p-6 rounded-lg w-[400px] relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-2">
+      <div className="bg-gray-800 p-4 sm:p-6 rounded-lg w-full max-w-xs sm:max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Editar Transação</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-white">
+            Editar Transação
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white text-lg"
@@ -211,16 +213,16 @@ export default function ModalEditor({
           <FaTrash />
           Deletar Transação
         </button>
-        <div className="flex gap-4 mt-4 justify-center text-center">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 justify-center text-center">
           <button
             onClick={onClose}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             onClick={handleSaveEdit}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500 w-full sm:w-auto"
           >
             Salvar
           </button>

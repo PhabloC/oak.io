@@ -46,8 +46,8 @@ export default function ModalTransacao({ onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-gray-800 p-6 rounded-lg w-[400px]">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-2">
+      <div className="bg-gray-800 p-4 sm:p-6 rounded-lg w-full max-w-xs sm:max-w-md">
         <h2 className="text-xl font-bold text-center text-white">
           Adicionar Transação
         </h2>
@@ -130,17 +130,17 @@ export default function ModalTransacao({ onClose, onSave }) {
               required
             />
           </div>
-          <div className="flex justify-end gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-4">
             <button
               type="button"
               onClick={onClose}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500"
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 w-full sm:w-auto"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500 w-full sm:w-auto"
             >
               Adicionar
             </button>
