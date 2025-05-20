@@ -39,7 +39,7 @@ export default function Login() {
 
   return (
     <div
-      className="h-screen w-full flex items-center justify-center bg-cover bg-center relative"
+      className="min-h-screen w-full flex items-center justify-center bg-cover bg-center relative"
       style={{
         backgroundImage: `url(${Banner})`,
       }}
@@ -49,8 +49,7 @@ export default function Login() {
 
       {/* Conteúdo centralizado com efeito de vidro e animação */}
       <div
-        className="relative z-10 bg-gray-800/30 backdrop-blur-md p-8 rounded-lg shadow-lg w-[500px] h-[500px] flex flex-col items-center justify-center
-        animate-fade-in-up"
+        className="relative z-10 bg-gray-800/30 backdrop-blur-md p-6 sm:p-8 rounded-lg shadow-lg w-[95vw] max-w-[500px] h-auto min-h-[420px] flex flex-col items-center justify-center animate-fade-in-up"
         style={{
           animation: "fadeInUp 0.7s cubic-bezier(0.23, 1, 0.32, 1)",
         }}
@@ -80,18 +79,18 @@ export default function Login() {
             }
           `}
         </style>
-        <div className="flex flex-col items-center gap-6">
-          <img className="h-20 w-45" src={Logo} alt="Logo" />
-          <h2 className="text-3xl font-bold text-white font-poppins">
+        <div className="flex flex-col items-center gap-6 w-full">
+          <img className="h-16 w-auto sm:h-20" src={Logo} alt="Logo" />
+          <h2 className="text-2xl sm:text-3xl font-bold text-white font-poppins text-center">
             Bem-vindo
           </h2>
-          <p className="text-lg text-gray-400 text-center font-poppins w-[350px]">
+          <p className="text-base sm:text-lg text-gray-400 text-center font-poppins w-full max-w-[350px]">
             Gerencie suas finanças com simplicidade e segurança. Bem-vindo à sua
             jornada de controle financeiro!
           </p>
           <button
             onClick={handleGoogleLogin}
-            className="flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+            className="flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 w-full max-w-[320px] justify-center"
           >
             <img
               ref={googleImgRef}
@@ -101,18 +100,20 @@ export default function Login() {
               src={Google}
               alt="Google Logo"
             />
-            <span className="font-semibold text-lg">Login com Google</span>
+            <span className="font-semibold text-base sm:text-lg">
+              Login com Google
+            </span>
           </button>
           {/* Mensagem de direitos reservados */}
-          <div className="text-center mt-6">
-            <p className="text-gray-500 text-sm">
+          <div className="text-center mt-6 w-full">
+            <p className="text-gray-500 text-xs sm:text-sm">
               © 2025 Todos os direitos reservados. Phablo Carvalho
             </p>
             <a
               href="https://github.com/PhabloC"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 text-sm hover:underline"
+              className="text-blue-500 text-xs sm:text-sm hover:underline break-all"
             >
               https://github.com/PhabloC
             </a>
