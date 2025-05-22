@@ -23,7 +23,7 @@ export default function ModalTransacao({ onClose, onSave }) {
     // Validação para impedir datas futuras
     const selectedDate = new Date(date);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normaliza para comparar apenas a data
+    today.setHours(0, 0, 0, 0);
     if (selectedDate > today) {
       alert("Não é possível selecionar datas futuras!");
       return;
@@ -34,7 +34,7 @@ export default function ModalTransacao({ onClose, onSave }) {
       value: parseFloat(value),
       type,
       method,
-      date, // Já está em formato YYYY-MM-DD
+      date,
     };
 
     try {

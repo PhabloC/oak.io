@@ -35,12 +35,13 @@ export default function Transactions() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Default items per page
 
   // Define o mês atual com a primeira letra maiúscula
   const currentMonth = new Date()
-    .toLocaleString("pt-BR", {
-      month: "long",
-    })
+    .toLocaleString("pt-BR", { month: "long" })
     .replace(/^\w/, (c) => c.toUpperCase());
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
@@ -67,6 +68,23 @@ export default function Transactions() {
     }
   }, [navigate, selectedMonth]);
 
+  // Adjust items per page based on screen size
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      if (window.innerWidth < 640) {
+        setItemsPerPage(5); // Mobile
+      } else if (window.innerWidth < 1550) {
+        setItemsPerPage(8); // Notebook
+      } else {
+        setItemsPerPage(10); // Desktop/Monitor
+      }
+    };
+
+    updateItemsPerPage();
+    window.addEventListener("resize", updateItemsPerPage);
+    return () => window.removeEventListener("resize", updateItemsPerPage);
+  }, []);
+
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
@@ -80,7 +98,6 @@ export default function Transactions() {
       const loadedTransactions = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Verifica se o mês corresponde à data
         const dateMonth = getMonthName(data.date);
         const capitalizedDateMonth =
           dateMonth.charAt(0).toUpperCase() + dateMonth.slice(1);
@@ -93,12 +110,12 @@ export default function Transactions() {
       });
 
       setTransactions(loadedTransactions);
+      setCurrentPage(1); // Reset to first page when transactions are loaded
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }
   };
 
-  // Função para obter o nome do mês a partir de uma data YYYY-MM-DD
   const getMonthName = (dateString) => {
     const months = [
       "janeiro",
@@ -174,6 +191,14 @@ export default function Transactions() {
       setShowConfirmModal(false);
       setSuccessMessage("Transação deletada com sucesso!");
       setTimeout(() => setSuccessMessage(""), 3000);
+
+      // Adjust current page if necessary
+      const totalPages = Math.ceil(
+        transactions.filter((t) => t.id !== id).length / itemsPerPage
+      );
+      if (currentPage > totalPages) {
+        setCurrentPage(totalPages || 1);
+      }
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
     }
@@ -189,26 +214,49 @@ export default function Transactions() {
     setShowConfirmModal(false);
   };
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = transactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Generate page numbers for larger screens
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
   return (
-    <div className="text-white flex">
+    <div className="text-white flex min-h-screen">
       {showSidebar && <Sidebar />}
       <div className="flex-1">
         <Header />
-        <div className="p-4 ml-28 mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold">Transações</h1>
-            <div className="flex items-center gap-4">
+        <div className="p-4 sm:ml-4 md:ml-16 lg:ml-28 mt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Transações</h1>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => setShowPopup(true)}
-                className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
+                className="bg-gray-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300 w-full sm:w-auto"
               >
-                <BsDatabaseFillAdd className="text-lg" />
-                <span>Adicionar transação</span>
+                <BsDatabaseFillAdd className="text-base sm:text-lg" />
+                <span className="text-sm sm:text-base">
+                  Adicionar transação
+                </span>
               </button>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-gray-800 text-white p-2 rounded-lg"
+                className="bg-gray-800 text-white px-3 py-2 rounded-lg w-full sm:w-auto text-sm sm:text-base"
               >
                 {months.map((month) => (
                   <option key={month} value={month}>
@@ -220,7 +268,7 @@ export default function Transactions() {
           </div>
 
           {successMessage && (
-            <div className="bg-green-600 text-white p-2 rounded-lg mb-4">
+            <div className="bg-green-600 text-white px-3 py-2 rounded-lg mb-4 text-sm sm:text-base">
               {successMessage}
             </div>
           )}
@@ -229,53 +277,56 @@ export default function Transactions() {
             <table className="w-full border-separate border-spacing-0 border border-slate-400 rounded-lg overflow-hidden">
               <thead>
                 <tr className="bg-gray-800 text-white">
-                  <th className="border border-slate-400 border-[1px] px-4 py-2 rounded-tl-lg">
+                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 rounded-tl-lg text-xs sm:text-sm">
                     Nome
                   </th>
-                  <th className="border border-slate-400 border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                     Tipo
                   </th>
-                  <th className="border border-slate-400 border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                     Método
                   </th>
-                  <th className="border border-slate-400 border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                     Data
                   </th>
-                  <th className="border border-slate-400 border-[1px] px-4 py-2">
+                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                     Valor
                   </th>
-                  <th className="border border-slate-400 border-[1px] px-4 py-2 rounded-tr-lg">
+                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 rounded-tr-lg text-xs sm:text-sm">
                     Ações
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.length === 0 ? (
+                {currentTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-4 text-gray-500">
+                    <td
+                      colSpan="6"
+                      className="text-center py-4 text-gray-500 text-xs sm:text-sm"
+                    >
                       Nenhuma transação encontrada.
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((transaction) => (
+                  currentTransactions.map((transaction) => (
                     <tr
                       key={transaction.id}
                       className="text-center hover:bg-gray-600 bg-gray-700"
                     >
-                      <td className="border border-slate-400 border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                         {transaction.title}
                       </td>
-                      <td className="border border-slate-400 border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                         {transaction.type}
                       </td>
-                      <td className="border border-slate-400 border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                         {transaction.method}
                       </td>
-                      <td className="border border-slate-400 border-[1px] px-4 py-2">
+                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                         {formatDate(transaction.date)}
                       </td>
                       <td
-                        className={`border border-slate-400 border-[1px] px-4 py-2 ${
+                        className={`border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm ${
                           transaction.type === "Gasto"
                             ? "text-red-500"
                             : "text-green-500"
@@ -285,18 +336,18 @@ export default function Transactions() {
                           ? `- R$ ${Math.abs(transaction.value).toFixed(2)}`
                           : `+ R$ ${transaction.value.toFixed(2)}`}
                       </td>
-                      <td className="flex border border-slate-400 border-[1px] px-4 py-2 gap-2 justify-center items-center text-center">
+                      <td className="flex border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 gap-2 justify-center items-center text-center">
                         <button
-                          className="p-2"
+                          className="p-1 sm:p-2"
                           onClick={() => handleOpenEditor(transaction)}
                         >
-                          <BsBoxArrowUpRight className="text-blue-500" />
+                          <BsBoxArrowUpRight className="text-blue-500 text-sm sm:text-base" />
                         </button>
                         <button
-                          className="p-2"
+                          className="p-1 sm:p-2"
                           onClick={() => handleOpenConfirmModal(transaction)}
                         >
-                          <FaTrash className="text-red-500" />
+                          <FaTrash className="text-red-500 text-sm sm:text-base" />
                         </button>
                       </td>
                     </tr>
@@ -305,6 +356,53 @@ export default function Transactions() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                  currentPage === 1
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-gray-800 hover:bg-gray-700"
+                } text-white transition duration-300 min-w-[80px] sm:min-w-[100px]`}
+              >
+                Anterior
+              </button>
+              {/* Page numbers for larger screens */}
+              <div className="hidden lg:flex gap-1">
+                {pageNumbers.map((number) => (
+                  <button
+                    key={number}
+                    onClick={() => paginate(number)}
+                    className={`px-2 py-1 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                      currentPage === number
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 hover:bg-gray-700 text-white"
+                    } transition duration-300`}
+                  >
+                    {number}
+                  </button>
+                ))}
+              </div>
+              <span className="text-white text-xs sm:text-sm">
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                  currentPage === totalPages
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-gray-800 hover:bg-gray-700"
+                } text-white transition duration-300 min-w-[80px] sm:min-w-[100px]`}
+              >
+                Próximo
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
