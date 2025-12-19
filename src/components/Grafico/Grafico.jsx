@@ -155,14 +155,14 @@ export default function Grafico({ lineData, pieData, selectedMonth }) {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-6">
       {/* Gráfico de Linha */}
-      <div className="bg-gray-800/30 backdrop-blur-md p-6 rounded-lg shadow-lg w-full h-[350px]">
+      <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-6 rounded-xl shadow-xl shadow-purple-500/10 w-full h-[350px] border border-indigo-500/20 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
         <Line data={lineData} options={lineOptions} />
       </div>
 
       {/* Gráfico de Pizza */}
-      <div className="bg-gray-800/30 backdrop-blur-md p-6 rounded-lg shadow-lg w-full h-[350px]">
+      <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-6 rounded-xl shadow-xl shadow-purple-500/10 w-full h-[350px] border border-indigo-500/20 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
         <Pie data={pieData} options={pieOptions} />
       </div>
     </div>
