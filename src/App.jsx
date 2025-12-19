@@ -10,7 +10,7 @@ export default function App() {
   return (
     <TransactionsProvider>
       <Router>
-        <div className="flex h-screen bg-[#1E1E2F]">
+        <div className="flex h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-950">
           <div className="flex-1">
             <Routes>
               <Route path="/" element={<Login />} />

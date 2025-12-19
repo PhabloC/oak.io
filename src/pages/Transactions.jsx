@@ -12,19 +12,12 @@ import {
 } from "firebase/firestore";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
-import { BsBoxArrowUpRight, BsDatabaseFillAdd } from "react-icons/bs";
+import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import ModalEditor from "../components/Modal/ModalEditor";
 import ModalDeleted from "../components/Modal/ModalDeleted";
-import { FaTrash } from "react-icons/fa";
 import { useTransactions } from "../context/TransactionsContext";
-
-// Função para formatar data YYYY-MM-DD para DD/MM/YYYY
-const formatDate = (dateString) => {
-  if (!dateString) return "";
-  const [year, month, day] = dateString.split("-");
-  return `${day}/${month}/${year}`;
-};
+import TransactionsTable from "../components/Table/TransactionsTable";
 
 export default function Transactions() {
   const navigate = useNavigate();
@@ -37,7 +30,7 @@ export default function Transactions() {
   const [successMessage, setSuccessMessage] = useState("");
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10); // Default items per page
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Define o mês atual com a primeira letra maiúscula
   const currentMonth = new Date()
@@ -68,7 +61,8 @@ export default function Transactions() {
     }
   }, [navigate, selectedMonth]);
 
-  // Adjust items per page based on screen size
+  // Ajuste os itens por página com base no tamanho da tela
+
   useEffect(() => {
     const updateItemsPerPage = () => {
       if (window.innerWidth < 640) {
@@ -110,7 +104,7 @@ export default function Transactions() {
       });
 
       setTransactions(loadedTransactions);
-      setCurrentPage(1); // Reset to first page when transactions are loaded
+      setCurrentPage(1); // Redefinir para a primeira página quando as transações forem carregadas
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }
@@ -192,7 +186,8 @@ export default function Transactions() {
       setSuccessMessage("Transação deletada com sucesso!");
       setTimeout(() => setSuccessMessage(""), 3000);
 
-      // Adjust current page if necessary
+      // Ajuste a página atual se necessário
+
       const totalPages = Math.ceil(
         transactions.filter((t) => t.id !== id).length / itemsPerPage
       );
@@ -229,7 +224,8 @@ export default function Transactions() {
     }
   };
 
-  // Generate page numbers for larger screens
+  // Gerar números de página para telas maiores
+
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
@@ -273,91 +269,13 @@ export default function Transactions() {
             </div>
           )}
 
-          <div className="overflow-x-auto mt-8">
-            <table className="w-full border-separate border-spacing-0 border border-slate-400 rounded-lg overflow-hidden">
-              <thead>
-                <tr className="bg-gray-800 text-white">
-                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 rounded-tl-lg text-xs sm:text-sm">
-                    Nome
-                  </th>
-                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                    Tipo
-                  </th>
-                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                    Método
-                  </th>
-                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                    Data
-                  </th>
-                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                    Valor
-                  </th>
-                  <th className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 rounded-tr-lg text-xs sm:text-sm">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTransactions.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="text-center py-4 text-gray-500 text-xs sm:text-sm"
-                    >
-                      Nenhuma transação encontrada.
-                    </td>
-                  </tr>
-                ) : (
-                  currentTransactions.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className="text-center hover:bg-gray-600 bg-gray-700"
-                    >
-                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        {transaction.title}
-                      </td>
-                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        {transaction.type}
-                      </td>
-                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        {transaction.method}
-                      </td>
-                      <td className="border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        {formatDate(transaction.date)}
-                      </td>
-                      <td
-                        className={`border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm ${
-                          transaction.type === "Gasto"
-                            ? "text-red-500"
-                            : "text-green-500"
-                        }`}
-                      >
-                        {transaction.type === "Gasto"
-                          ? `- R$ ${Math.abs(transaction.value).toFixed(2)}`
-                          : `+ R$ ${transaction.value.toFixed(2)}`}
-                      </td>
-                      <td className="flex border border-slate-400 border-[1px] px-2 sm:px-4 py-1 sm:py-2 gap-2 justify-center items-center text-center">
-                        <button
-                          className="p-1 sm:p-2"
-                          onClick={() => handleOpenEditor(transaction)}
-                        >
-                          <BsBoxArrowUpRight className="text-blue-500 text-sm sm:text-base" />
-                        </button>
-                        <button
-                          className="p-1 sm:p-2"
-                          onClick={() => handleOpenConfirmModal(transaction)}
-                        >
-                          <FaTrash className="text-red-500 text-sm sm:text-base" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <TransactionsTable
+            transactions={currentTransactions}
+            onEdit={handleOpenEditor}
+            onDelete={handleOpenConfirmModal}
+          />
 
-          {/* Pagination Controls */}
+          {/* Controle de páginação */}
           {totalPages > 1 && (
             <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
               <button
@@ -371,7 +289,8 @@ export default function Transactions() {
               >
                 Anterior
               </button>
-              {/* Page numbers for larger screens */}
+              {/* Números de página para telas maiores
+               */}
               <div className="hidden lg:flex gap-1">
                 {pageNumbers.map((number) => (
                   <button

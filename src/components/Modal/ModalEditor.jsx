@@ -118,45 +118,45 @@ export default function ModalEditor({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-2">
-      <div className="bg-gray-800 p-4 sm:p-6 rounded-lg w-full max-w-xs sm:max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg sm:text-xl font-bold text-white">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn">
+      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-xs sm:max-w-md border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">
             Editar Transação
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-lg"
+            className="text-gray-400 hover:text-white text-2xl transition-all duration-200 hover:scale-110 hover:rotate-90 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-700/50"
           >
-            X
+            ×
           </button>
         </div>
-        <form className="space-y-4">
+        <form className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Título
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Valor
             </label>
             <div className="flex items-center">
-              <span className="bg-gray-700 text-white p-2 rounded-l-lg">
+              <span className="bg-gradient-to-r from-gray-700 to-gray-600 text-white p-3 rounded-l-xl border border-gray-600/50 font-semibold">
                 R$
               </span>
               <input
                 type="number"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full p-2 rounded-r-lg bg-gray-700 text-white"
+                className="w-full p-3 rounded-r-xl bg-gray-700/50 text-white border border-gray-600/50 border-l-0 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none"
                 step="0.01"
                 min="0"
                 required
@@ -164,13 +164,13 @@ export default function ModalEditor({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Tipo
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
             >
               <option value="Ganho">Ganho</option>
@@ -179,13 +179,13 @@ export default function ModalEditor({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Método
             </label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
             >
               <option value="Boleto">Boleto</option>
               <option value="Pix">Pix</option>
@@ -193,7 +193,7 @@ export default function ModalEditor({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Data
             </label>
             <input
@@ -201,28 +201,28 @@ export default function ModalEditor({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               max={maxDate}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
             />
           </div>
         </form>
         <button
           onClick={handleDeleteTransaction}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 flex items-center gap-2 mt-4 w-full justify-center"
+          className="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-3 rounded-xl hover:from-red-500 hover:to-red-600 flex items-center gap-2 mt-6 w-full justify-center transition-all duration-200 font-medium shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 hover:scale-[1.02] border border-red-500/30"
         >
           <FaTrash />
           Deletar Transação
         </button>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 justify-center text-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
           <button
             onClick={onClose}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 w-full sm:w-auto"
+            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-xl hover:from-gray-500 hover:to-gray-600 w-full sm:w-auto transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:scale-[1.02] border border-gray-500/30"
           >
             Cancelar
           </button>
           <button
             onClick={handleSaveEdit}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500 w-full sm:w-auto"
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:from-green-500 hover:to-green-600 w-full sm:w-auto transition-all duration-200 font-medium shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 hover:scale-[1.02] border border-green-500/30"
           >
             Salvar
           </button>

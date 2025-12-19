@@ -46,41 +46,43 @@ export default function ModalTransacao({ onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-2">
-      <div className="bg-gray-800 p-4 sm:p-6 rounded-lg w-full max-w-xs sm:max-w-md">
-        <h2 className="text-xl font-bold text-center text-white">
-          Adicionar Transação
-        </h2>
-        <p className="mb-4 text-center text-gray-400">
-          Insira as informações abaixo:
-        </p>
-        <form className="space-y-4" onSubmit={handleSaveTransaction}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn">
+      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-xs sm:max-w-md border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
+        <div className="text-center mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+            Adicionar Transação
+          </h2>
+          <p className="text-gray-300 text-sm">
+            Insira as informações abaixo:
+          </p>
+        </div>
+        <form className="space-y-5" onSubmit={handleSaveTransaction}>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Título
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
               placeholder="Ex: Compra no mercado"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Valor
             </label>
             <div className="flex items-center">
-              <span className="bg-gray-700 text-white p-2 rounded-l-lg">
+              <span className="bg-gradient-to-r from-gray-700 to-gray-600 text-white p-3 rounded-l-xl border border-gray-600/50 font-semibold">
                 R$
               </span>
               <input
                 type="number"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full p-2 rounded-r-lg bg-gray-700 text-white"
+                className="w-full p-3 rounded-r-xl bg-gray-700/50 text-white border border-gray-600/50 border-l-0 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
                 placeholder="Ex: 200"
                 step="0.01"
                 min="0"
@@ -89,13 +91,13 @@ export default function ModalTransacao({ onClose, onSave }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Tipo de Transação
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
             >
               <option value="Ganho">Ganho</option>
@@ -104,13 +106,13 @@ export default function ModalTransacao({ onClose, onSave }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Método de Pagamento
             </label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
             >
               <option value="Boleto">Boleto</option>
               <option value="Pix">Pix</option>
@@ -118,7 +120,7 @@ export default function ModalTransacao({ onClose, onSave }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white">
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Data
             </label>
             <input
@@ -126,21 +128,21 @@ export default function ModalTransacao({ onClose, onSave }) {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               max={maxDate}
-              className="w-full p-2 rounded-lg bg-gray-700 text-white"
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
             />
           </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 w-full sm:w-auto"
+              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl hover:from-red-500 hover:to-red-600 w-full sm:w-auto transition-all duration-200 font-medium shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 hover:scale-[1.02] border border-red-500/30"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500 w-full sm:w-auto"
+              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:from-green-500 hover:to-green-600 w-full sm:w-auto transition-all duration-200 font-medium shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 hover:scale-[1.02] border border-green-500/30"
             >
               Adicionar
             </button>
