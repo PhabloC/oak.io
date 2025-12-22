@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
-import { doc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig";
+import { supabase } from "../../supabaseClient";
 
 // Função para obter o nome do mês a partir de uma data YYYY-MM-DD
 const getMonthName = (dateString) => {
@@ -26,15 +25,24 @@ const getMonthName = (dateString) => {
 
 const editTransaction = async (transactionId, updatedData) => {
   try {
-    const userId = auth.currentUser.uid;
-    const transactionRef = doc(
-      db,
-      "users",
-      userId,
-      "transactions",
-      transactionId
-    );
-    await updateDoc(transactionRef, updatedData);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const { error } = await supabase
+      .from("transactions")
+      .update(updatedData)
+      .eq("id", transactionId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      throw error;
+    }
+
     console.log("Transação atualizada com sucesso!");
   } catch (error) {
     console.error("Erro ao atualizar transação:", error);

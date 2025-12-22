@@ -1,12 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-
 import ProtectedRoute from "./components/ProtectedRoute";
 import { TransactionsProvider } from "./context/TransactionsContext";
 import Transactions from "./pages/Transactions";
 
 export default function App() {
+  // Remove o estado isProcessingAuth e o useEffect que processa OAuth
+  // Deixa o Login.jsx e ProtectedRoute.jsx lidarem com isso
+
   return (
     <TransactionsProvider>
       <Router>
