@@ -8,18 +8,74 @@ import Google from "../assets/google.png";
 export default function Login() {
   const navigate = useNavigate();
   const [showGoogleSpin, setShowGoogleSpin] = useState(false);
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
   const googleImgRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
+    let authCheckTimeout = null;
+    const isProcessingRef = { current: false };
 
     const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        // Verifica se está processando callback OAuth
+        const hasOAuthHash =
+          window.location.hash &&
+          (window.location.hash.includes("access_token") ||
+            window.location.hash.includes("error"));
 
-      if (mounted && user) {
-        navigate("/dashboard");
+        if (hasOAuthHash) {
+          setIsProcessingAuth(true);
+          isProcessingRef.current = true;
+
+          // IMPORTANTE: Processa explicitamente o hash
+          try {
+            const { data, error } = await supabase.auth.getSession();
+            if (error) {
+              console.error(" Erro ao processar sessão:", error);
+            } else if (data?.session) {
+              // O onAuthStateChange vai capturar isso e redirecionar
+            }
+          } catch (err) {
+            console.error(" Erro ao processar callback:", err);
+          }
+
+          // Define um timeout de segurança
+          authCheckTimeout = setTimeout(() => {
+            if (mounted && isProcessingRef.current) {
+              setIsProcessingAuth(false);
+              isProcessingRef.current = false;
+              alert(
+                "Houve um problema ao processar o login. Por favor, tente novamente."
+              );
+            }
+          }, 5000);
+
+          return;
+        }
+
+        // Se não há hash OAuth, verifica a sessão normalmente
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error(" Login: Erro ao buscar sessão:", error);
+          setIsProcessingAuth(false);
+          return;
+        }
+
+        if (!mounted) return;
+
+        if (session?.user) {
+          navigate("/dashboard", { replace: true });
+        } else {
+          setIsProcessingAuth(false);
+        }
+      } catch (error) {
+        console.error(" Login: Erro no checkUser:", error);
+        setIsProcessingAuth(false);
       }
     };
 
@@ -27,15 +83,45 @@ export default function Login() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      if (session?.user) {
-        navigate("/dashboard");
+
+      // Cancela o timeout se houver
+      if (authCheckTimeout) {
+        clearTimeout(authCheckTimeout);
+        authCheckTimeout = null;
+      }
+
+      if (event === "SIGNED_IN" && session?.user) {
+        isProcessingRef.current = false;
+        // Limpa o hash da URL
+        if (window.location.hash) {
+          console.log("🧹 Limpando hash da URL");
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+        // Redireciona para o dashboard
+        setIsProcessingAuth(false);
+        navigate("/dashboard", { replace: true });
+      } else if (event === "SIGNED_OUT") {
+        isProcessingRef.current = false;
+        setIsProcessingAuth(false);
+      } else if (event === "INITIAL_SESSION") {
+        if (session?.user) {
+          isProcessingRef.current = false;
+          setIsProcessingAuth(false);
+          navigate("/dashboard", { replace: true });
+        } else {
+          isProcessingRef.current = false;
+          setIsProcessingAuth(false);
+        }
       }
     });
 
     return () => {
       mounted = false;
+      if (authCheckTimeout) {
+        clearTimeout(authCheckTimeout);
+      }
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -51,27 +137,9 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      // O redirectTo deve apontar para onde o Supabase vai redirecionar após a autenticação
-      // O Supabase processa o callback e então redireciona para esta URL
-      const redirectTo = `${window.location.origin}/dashboard`;
+      setIsProcessingAuth(true);
 
-      // Logs para debug
-      console.log("🔍 Iniciando login com Google...");
-      console.log("📍 URL de redirecionamento:", redirectTo);
-      console.log("🌐 Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
-
-      // A URL de callback do Supabase será: https://[PROJETO-ID].supabase.co/auth/v1/callback
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      if (supabaseUrl) {
-        const callbackUrl = `${supabaseUrl}/auth/v1/callback`;
-        console.log(
-          "🔗 URL de callback do Supabase (adicione no Google Cloud Console):",
-          callbackUrl
-        );
-        console.log(
-          "⚠️  IMPORTANTE: Esta URL deve estar configurada no Google Cloud Console!"
-        );
-      }
+      const redirectTo = `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -85,24 +153,42 @@ export default function Login() {
       });
 
       if (error) {
-        console.error("❌ Erro ao fazer login:", error.message);
-        console.error("Detalhes do erro:", error);
-        alert(
-          `Erro ao fazer login: ${error.message}\n\nVerifique o console para mais detalhes.`
-        );
-      } else if (data) {
-        console.log("✅ Login iniciado com sucesso!");
-        console.log("Redirecionando para:", data.url);
+        console.error(" Erro ao fazer login:", error.message);
+        console.error("Erro completo:", error);
+        alert(`Erro ao fazer login: ${error.message}`);
+        setIsProcessingAuth(false);
       }
     } catch (error) {
-      console.error("❌ Erro ao fazer login:", error);
-      alert(
-        `Erro ao fazer login: ${
-          error.message || error
-        }\n\nVerifique o console para mais detalhes.`
-      );
+      console.error(" Erro ao fazer login:", error);
+      alert(`Erro ao fazer login: ${error.message || error}`);
+      setIsProcessingAuth(false);
     }
   };
+
+  // Mostra loading se estiver processando autenticação OAuth
+  if (isProcessingAuth) {
+    return (
+      <div
+        className="min-h-screen w-full flex items-center justify-center bg-cover bg-center relative"
+        style={{
+          backgroundImage: `url(${Banner})`,
+        }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="relative z-10 bg-gray-800/30 backdrop-blur-md p-8 rounded-lg shadow-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+            <p className="text-white mt-4 text-lg font-semibold">
+              Processando autenticação...
+            </p>
+            <p className="text-gray-300 mt-2 text-sm">
+              Aguarde enquanto validamos seu login
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -157,7 +243,8 @@ export default function Login() {
           </p>
           <button
             onClick={handleGoogleLogin}
-            className="flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 w-full max-w-[320px] justify-center"
+            disabled={isProcessingAuth}
+            className="flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 w-full max-w-[320px] justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <img
               ref={googleImgRef}
@@ -168,7 +255,7 @@ export default function Login() {
               alt="Google Logo"
             />
             <span className="font-semibold text-base sm:text-lg">
-              Login com Google
+              {isProcessingAuth ? "Processando..." : "Login com Google"}
             </span>
           </button>
           {/* Mensagem de direitos reservados */}
