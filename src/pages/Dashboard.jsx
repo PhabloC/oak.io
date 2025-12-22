@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { auth, db } from "../firebaseConfig";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { supabase } from "../supabaseClient";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Grafico from "../components/Grafico/Grafico";
@@ -66,9 +65,16 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      navigate("/");
-    }
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/");
+      }
+    };
+
+    checkAuth();
   }, [navigate]);
 
   const showSidebar =
@@ -77,17 +83,28 @@ export default function Dashboard() {
   // Função para carregar transações do Firestore
   const loadTransactions = async (month) => {
     try {
-      const userId = auth.currentUser.uid;
-      const transactionsRef = collection(db, "users", userId, "transactions");
-      const q = query(transactionsRef, where("month", "==", month));
-      const querySnapshot = await getDocs(q);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const loadedTransactions = [];
-      querySnapshot.forEach((doc) => {
-        loadedTransactions.push({ id: doc.id, ...doc.data() });
-      });
+      if (!user) {
+        navigate("/");
+        return;
+      }
 
-      setTransactions(loadedTransactions);
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("month", month)
+        .order("date", { ascending: true });
+
+      if (error) {
+        console.error("Erro ao carregar transações:", error);
+        return;
+      }
+
+      setTransactions(data || []);
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }
@@ -125,16 +142,36 @@ export default function Dashboard() {
 
   const handleAddTransaction = async (transaction) => {
     try {
-      const userId = auth.currentUser.uid;
-      const transactionsRef = collection(db, "users", userId, "transactions");
-      const newTransaction = { ...transaction, month: selectedMonth };
-      const docRef = await addDoc(transactionsRef, newTransaction);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const newTransaction = {
+        ...transaction,
+        month: selectedMonth,
+        user_id: user.id,
+      };
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert([newTransaction])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao adicionar transação:", error);
+        return;
+      }
+
+      const savedTransaction = data;
 
       // Atualiza o estado global
-      const updatedTransactions = [
-        ...transactions,
-        { id: docRef.id, ...newTransaction },
-      ];
+      const updatedTransactions = [...transactions, savedTransaction];
       setTransactions(updatedTransactions);
 
       // Recalcula os dados do dashboard

@@ -1,22 +1,21 @@
 # Oak.io - Controle Financeiro
 
-Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tailwind CSS**, **Firebase** e **Firestore**. O objetivo principal é fornecer uma plataforma para gerenciar entradas e saídas de capital, além de facilitar o gerenciamento de investimentos.
+Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tailwind CSS** e **Supabase**. O objetivo principal é fornecer uma plataforma para gerenciar entradas e saídas de capital, além de facilitar o gerenciamento de investimentos.
 
 ## Tecnologias Utilizadas
 
 - **React**: Biblioteca JavaScript para construção de interfaces de usuário.
 - **Tailwind CSS**: Framework CSS utilitário para estilização rápida e eficiente.
 - **Vite**: Ferramenta de build rápida para desenvolvimento moderno.
-- **Firebase**: Utilizado para autenticação de usuários com login via Google.
-- **Firestore**: Banco de dados NoSQL para armazenar e gerenciar as transações financeiras.
+- **Supabase**: Utilizado para autenticação de usuários com login via Google OAuth e banco de dados PostgreSQL.
 - **Vercel**: Plataforma de deploy para hospedar o projeto.
 
 ## Funcionalidades
 
 - Controle de entradas e saídas de capital.
 - Gerenciamento de investimentos.
-- Login com Google utilizando Firebase.
-- Armazenamento seguro de dados no Firestore.
+- Login com Google utilizando Supabase OAuth.
+- Armazenamento seguro de dados no PostgreSQL (Supabase).
 - Interface moderna e responsiva.
 
 ## Como Executar o Projeto
@@ -35,24 +34,73 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
 
 3. Configure as variáveis de ambiente:
 
-   - Crie um arquivo `.env.local` na raiz do projeto.
-   - Adicione as credenciais do Firebase e Firestore:
+   - Crie um arquivo `.env` na raiz do projeto.
+   - Adicione as credenciais do Supabase:
      ```env
-     VITE_FIREBASE_API_KEY=your_api_key
-     VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-     VITE_FIREBASE_PROJECT_ID=your_project_id
-     VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-     VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-     VITE_FIREBASE_APP_ID=your_app_id
+     VITE_SUPABASE_URL=your_supabase_project_url
+     VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
      ```
 
-4. Execute o projeto em ambiente de desenvolvimento:
+4. Configure o Supabase:
+
+   - Crie um projeto no [Supabase](https://supabase.com)
+   - Configure o Google OAuth em **Authentication → Providers**
+   - **IMPORTANTE**: Configure as URLs de redirecionamento:
+     - No Supabase: **Authentication → URL Configuration → Redirect URLs**
+       - Adicione: `http://localhost:5173/dashboard` e `http://localhost:5173/**`
+     - No Google Cloud Console: **APIs & Services → Credentials → OAuth 2.0 Client ID**
+       - Adicione em **Authorized redirect URIs**: `https://[SEU-PROJETO-ID].supabase.co/auth/v1/callback`
+       - Substitua `[SEU-PROJETO-ID]` pelo ID do seu projeto Supabase (encontre em Settings → API)
+   - Veja o arquivo `CONFIGURACAO_OAUTH.md` para instruções detalhadas sobre configuração do OAuth
+   - Crie a tabela `transactions` no banco de dados com a seguinte estrutura SQL:
+
+   ```sql
+   CREATE TABLE transactions (
+     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+     title TEXT NOT NULL,
+     value NUMERIC NOT NULL,
+     type TEXT NOT NULL CHECK (type IN ('Ganho', 'Gasto', 'Investimento')),
+     method TEXT NOT NULL CHECK (method IN ('Boleto', 'Pix', 'Cartão')),
+     date DATE NOT NULL,
+     month TEXT NOT NULL,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   );
+
+   -- Criar índice para melhorar performance das queries
+   CREATE INDEX idx_transactions_user_month ON transactions(user_id, month);
+
+   -- Habilitar Row Level Security (RLS)
+   ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+   -- Política RLS: usuários só podem ver suas próprias transações
+   CREATE POLICY "Users can view own transactions"
+     ON transactions FOR SELECT
+     USING (auth.uid() = user_id);
+
+   -- Política RLS: usuários só podem inserir suas próprias transações
+   CREATE POLICY "Users can insert own transactions"
+     ON transactions FOR INSERT
+     WITH CHECK (auth.uid() = user_id);
+
+   -- Política RLS: usuários só podem atualizar suas próprias transações
+   CREATE POLICY "Users can update own transactions"
+     ON transactions FOR UPDATE
+     USING (auth.uid() = user_id);
+
+   -- Política RLS: usuários só podem deletar suas próprias transações
+   CREATE POLICY "Users can delete own transactions"
+     ON transactions FOR DELETE
+     USING (auth.uid() = user_id);
+   ```
+
+5. Execute o projeto em ambiente de desenvolvimento:
 
    ```bash
    npm run dev
    ```
 
-5. Acesse o projeto no navegador:
+6. Acesse o projeto no navegador:
    ```
    http://localhost:5173
    ```

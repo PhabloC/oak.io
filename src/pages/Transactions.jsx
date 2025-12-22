@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { auth, db } from "../firebaseConfig";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  deleteDoc,
-  addDoc,
-} from "firebase/firestore";
+import { supabase } from "../supabaseClient";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { BsDatabaseFillAdd } from "react-icons/bs";
@@ -54,11 +45,20 @@ export default function Transactions() {
   ];
 
   useEffect(() => {
-    if (auth.currentUser) {
-      loadTransactions(selectedMonth);
-    } else {
-      navigate("/");
-    }
+    const checkAndLoad = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      await loadTransactions(selectedMonth, user.id);
+    };
+
+    checkAndLoad();
   }, [navigate, selectedMonth]);
 
   // Ajuste os itens por página com base no tamanho da tela
@@ -84,23 +84,37 @@ export default function Transactions() {
 
   const loadTransactions = async (month) => {
     try {
-      const userId = auth.currentUser.uid;
-      const transactionsRef = collection(db, "users", userId, "transactions");
-      const q = query(transactionsRef, where("month", "==", month));
-      const querySnapshot = await getDocs(q);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const loadedTransactions = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const dateMonth = getMonthName(data.date);
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("month", month)
+        .order("date", { ascending: true });
+
+      if (error) {
+        console.error("Erro ao carregar transações:", error);
+        return;
+      }
+
+      const loadedTransactions = (data || []).map((row) => {
+        const dateMonth = getMonthName(row.date);
         const capitalizedDateMonth =
           dateMonth.charAt(0).toUpperCase() + dateMonth.slice(1);
-        if (data.month !== capitalizedDateMonth) {
+        if (row.month !== capitalizedDateMonth) {
           console.warn(
-            `Mês inconsistente para transação ${doc.id}: date=${data.date}, month=${data.month}, deveria ser ${capitalizedDateMonth}`
+            `Mês inconsistente para transação ${row.id}: date=${row.date}, month=${row.month}, deveria ser ${capitalizedDateMonth}`
           );
         }
-        loadedTransactions.push({ id: doc.id, ...data });
+        return row;
       });
 
       setTransactions(loadedTransactions);
@@ -132,16 +146,33 @@ export default function Transactions() {
 
   const handleAddTransaction = async (transaction) => {
     try {
-      const userId = auth.currentUser.uid;
-      const transactionsRef = collection(db, "users", userId, "transactions");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const newTransaction = { ...transaction, month: selectedMonth };
-      const docRef = await addDoc(transactionsRef, newTransaction);
+      if (!user) {
+        navigate("/");
+        return;
+      }
 
-      setTransactions((prev) => [
-        ...prev,
-        { id: docRef.id, ...newTransaction },
-      ]);
+      const newTransaction = {
+        ...transaction,
+        month: selectedMonth,
+        user_id: user.id,
+      };
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert([newTransaction])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao adicionar transação:", error);
+        return;
+      }
+
+      setTransactions((prev) => [...prev, data]);
       setShowPopup(false);
       setSuccessMessage("Transação adicionada com sucesso!");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -176,9 +207,25 @@ export default function Transactions() {
 
   const handleDeleteTransaction = async (id) => {
     try {
-      const userId = auth.currentUser.uid;
-      const transactionRef = doc(db, "users", userId, "transactions", id);
-      await deleteDoc(transactionRef);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Erro ao deletar transação:", error);
+        return;
+      }
 
       setTransactions((prev) => prev.filter((t) => t.id !== id));
       setTransactionToDelete(null);

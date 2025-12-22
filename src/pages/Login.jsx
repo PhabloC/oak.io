@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { auth, googleProvider } from "../firebaseConfig";
-import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import Banner from "../assets/banner.jpg";
 import Logo from "../assets/Header/logo2.png";
 import Google from "../assets/google.png";
@@ -12,12 +11,33 @@ export default function Login() {
   const googleImgRef = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
+    let mounted = true;
+
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (mounted && user) {
+        navigate("/dashboard");
+      }
+    };
+
+    checkUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      if (session?.user) {
         navigate("/dashboard");
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   // Dispara animação do Google após animação do modal
@@ -31,9 +51,56 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      // O redirectTo deve apontar para onde o Supabase vai redirecionar após a autenticação
+      // O Supabase processa o callback e então redireciona para esta URL
+      const redirectTo = `${window.location.origin}/dashboard`;
+
+      // Logs para debug
+      console.log("🔍 Iniciando login com Google...");
+      console.log("📍 URL de redirecionamento:", redirectTo);
+      console.log("🌐 Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
+
+      // A URL de callback do Supabase será: https://[PROJETO-ID].supabase.co/auth/v1/callback
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (supabaseUrl) {
+        const callbackUrl = `${supabaseUrl}/auth/v1/callback`;
+        console.log(
+          "🔗 URL de callback do Supabase (adicione no Google Cloud Console):",
+          callbackUrl
+        );
+        console.log(
+          "⚠️  IMPORTANTE: Esta URL deve estar configurada no Google Cloud Console!"
+        );
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) {
+        console.error("❌ Erro ao fazer login:", error.message);
+        console.error("Detalhes do erro:", error);
+        alert(
+          `Erro ao fazer login: ${error.message}\n\nVerifique o console para mais detalhes.`
+        );
+      } else if (data) {
+        console.log("✅ Login iniciado com sucesso!");
+        console.log("Redirecionando para:", data.url);
+      }
     } catch (error) {
-      console.error("Erro ao fazer login:", error.code, error.message);
+      console.error("❌ Erro ao fazer login:", error);
+      alert(
+        `Erro ao fazer login: ${
+          error.message || error
+        }\n\nVerifique o console para mais detalhes.`
+      );
     }
   };
 

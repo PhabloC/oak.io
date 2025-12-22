@@ -1,13 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoHeader from "../../assets/Header/logo2.png";
 import { TbTransitionRightFilled } from "react-icons/tb";
 import { MdDashboard } from "react-icons/md";
 import { IoExit } from "react-icons/io5";
-import { signOut } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
-import { useNavigate } from "react-router-dom";
 import Tree from "../../assets/tree.png";
 import { useState } from "react";
+import { supabase } from "../../supabaseClient";
 
 export default function Sidebar() {
   const location = useLocation();
@@ -16,7 +14,7 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       navigate("/");
     } catch (error) {
       console.error("Erro ao sair:", error);
