@@ -9,6 +9,8 @@ import ModalEditor from "../components/Modal/ModalEditor";
 import ModalDeleted from "../components/Modal/ModalDeleted";
 import { useTransactions } from "../context/TransactionsContext";
 import TransactionsTable from "../components/Table/TransactionsTable";
+import { DEFAULT_CATEGORIES, getAllCategories } from "../utils/categories";
+import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 
 export default function Transactions() {
   const navigate = useNavigate();
@@ -22,6 +24,13 @@ export default function Transactions() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("Todos");
+  const [filterCategory, setFilterCategory] = useState("Todas");
+  const [filterMethod, setFilterMethod] = useState("Todos");
+  const [minValue, setMinValue] = useState("");
+  const [maxValue, setMaxValue] = useState("");
 
   // Define o mês atual com a primeira letra maiúscula
   const currentMonth = new Date()
@@ -234,10 +243,8 @@ export default function Transactions() {
       setTimeout(() => setSuccessMessage(""), 3000);
 
       // Ajuste a página atual se necessário
-
-      const totalPages = Math.ceil(
-        transactions.filter((t) => t.id !== id).length / itemsPerPage
-      );
+      const remainingTransactions = transactions.filter((t) => t.id !== id);
+      const totalPages = Math.ceil(remainingTransactions.length / itemsPerPage);
       if (currentPage > totalPages) {
         setCurrentPage(totalPages || 1);
       }
@@ -256,14 +263,75 @@ export default function Transactions() {
     setShowConfirmModal(false);
   };
 
+  // Filter logic
+  const filteredTransactions = transactions.filter((transaction) => {
+    // Search term filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch =
+        transaction.title?.toLowerCase().includes(searchLower) ||
+        transaction.description?.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+
+    // Type filter
+    if (filterType !== "Todos" && transaction.type !== filterType) {
+      return false;
+    }
+
+    // Category filter
+    if (filterCategory !== "Todas") {
+      if (!transaction.category || transaction.category !== filterCategory) {
+        return false;
+      }
+    }
+
+    // Method filter
+    if (filterMethod !== "Todos" && transaction.method !== filterMethod) {
+      return false;
+    }
+
+    // Value range filters
+    if (minValue && transaction.value < parseFloat(minValue)) {
+      return false;
+    }
+    if (maxValue && transaction.value > parseFloat(maxValue)) {
+      return false;
+    }
+
+    return true;
+  });
+
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTransactions = transactions.slice(
+  const currentTransactions = filteredTransactions.slice(
     indexOfFirstItem,
     indexOfLastItem
   );
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, filterCategory, filterMethod, minValue, maxValue]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterType("Todos");
+    setFilterCategory("Todas");
+    setFilterMethod("Todos");
+    setMinValue("");
+    setMaxValue("");
+  };
+
+  const hasActiveFilters =
+    searchTerm ||
+    filterType !== "Todos" ||
+    filterCategory !== "Todas" ||
+    filterMethod !== "Todos" ||
+    minValue ||
+    maxValue;
 
   const paginate = (pageNumber) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
@@ -315,6 +383,118 @@ export default function Transactions() {
               {successMessage}
             </div>
           )}
+
+          {/* Filtros e Busca */}
+          <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-4 sm:p-6 rounded-xl shadow-xl shadow-purple-500/10 border border-indigo-500/20 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 text-indigo-200">
+                <FaFilter className="text-lg" />
+                <h3 className="text-lg font-semibold">Filtros</h3>
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-300 rounded-lg text-sm transition-all duration-200 border border-red-500/30"
+                >
+                  <FaTimes />
+                  Limpar Filtros
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {/* Busca */}
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+                <input
+                  type="text"
+                  placeholder="Buscar por título ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-sm placeholder:text-gray-500"
+                />
+              </div>
+
+              {/* Filtro por Tipo */}
+              <div>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-sm"
+                >
+                  <option value="Todos">Todos os Tipos</option>
+                  <option value="Ganho">Ganho</option>
+                  <option value="Gasto">Gasto</option>
+                  <option value="Investimento">Investimento</option>
+                </select>
+              </div>
+
+              {/* Filtro por Categoria */}
+              <div>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-sm"
+                >
+                  <option value="Todas">Todas as Categorias</option>
+                  {getAllCategories().map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por Método */}
+              <div>
+                <select
+                  value={filterMethod}
+                  onChange={(e) => setFilterMethod(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-sm"
+                >
+                  <option value="Todos">Todos os Métodos</option>
+                  <option value="Pix">Pix</option>
+                  <option value="Cartão">Cartão</option>
+                  <option value="Boleto">Boleto</option>
+                </select>
+              </div>
+
+              {/* Filtro por Valor Mínimo */}
+              <div>
+                <input
+                  type="number"
+                  placeholder="Valor mínimo"
+                  value={minValue}
+                  onChange={(e) => setMinValue(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-sm placeholder:text-gray-500"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+
+              {/* Filtro por Valor Máximo */}
+              <div>
+                <input
+                  type="number"
+                  placeholder="Valor máximo"
+                  value={maxValue}
+                  onChange={(e) => setMaxValue(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-sm placeholder:text-gray-500"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <div className="mt-4 pt-4 border-t border-gray-700/50">
+                <p className="text-sm text-gray-400">
+                  Mostrando <span className="font-semibold text-white">{filteredTransactions.length}</span> de{" "}
+                  <span className="font-semibold text-white">{transactions.length}</span> transações
+                </p>
+              </div>
+            )}
+          </div>
 
           <TransactionsTable
             transactions={currentTransactions}

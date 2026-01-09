@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DEFAULT_CATEGORIES } from "../../utils/categories";
 
 export default function ModalTransacao({ onClose, onSave }) {
   // Estados locais para os campos do formulário
@@ -7,6 +8,14 @@ export default function ModalTransacao({ onClose, onSave }) {
   const [type, setType] = useState("Ganho");
   const [method, setMethod] = useState("Boleto");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+
+  // Resetar categoria quando o tipo mudar
+  const handleTypeChange = (newType) => {
+    setType(newType);
+    setCategory(""); // Resetar categoria quando tipo mudar
+  };
 
   // Calcula a data máxima (hoje) no formato YYYY-MM-DD
   const maxDate = new Date().toISOString().split("T")[0];
@@ -35,6 +44,8 @@ export default function ModalTransacao({ onClose, onSave }) {
       type,
       method,
       date,
+      category: category || null,
+      description: description || null,
     };
 
     try {
@@ -96,7 +107,7 @@ export default function ModalTransacao({ onClose, onSave }) {
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => handleTypeChange(e.target.value)}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
             >
@@ -121,6 +132,23 @@ export default function ModalTransacao({ onClose, onSave }) {
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-indigo-200">
+              Categoria
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
+            >
+              <option value="">Selecione uma categoria</option>
+              {(DEFAULT_CATEGORIES[type] || []).map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Data
             </label>
             <input
@@ -130,6 +158,18 @@ export default function ModalTransacao({ onClose, onSave }) {
               max={maxDate}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
+              Descrição (opcional)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500 resize-none"
+              placeholder="Adicione observações ou notas sobre esta transação..."
+              rows="3"
             />
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6">

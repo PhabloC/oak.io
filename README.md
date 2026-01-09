@@ -12,11 +12,16 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
 
 ## Funcionalidades
 
-- Controle de entradas e saídas de capital.
-- Gerenciamento de investimentos.
-- Login com Google utilizando Supabase OAuth.
-- Armazenamento seguro de dados no PostgreSQL (Supabase).
-- Interface moderna e responsiva.
+- ✅ Controle de entradas e saídas de capital.
+- ✅ Gerenciamento de investimentos.
+- ✅ **Categorias personalizadas** - Organize suas transações por categorias (Alimentação, Transporte, Saúde, etc.).
+- ✅ **Campo de descrição** - Adicione notas e observações às suas transações.
+- ✅ **Filtros e busca avançada** - Filtre transações por tipo, categoria, método de pagamento, valor e busque por título/descrição.
+- ✅ **Gráficos por categoria** - Visualize seus gastos por categoria no dashboard.
+- ✅ Dashboard com gráficos interativos (linha, pizza e barras).
+- ✅ Login com Google utilizando Supabase OAuth.
+- ✅ Armazenamento seguro de dados no PostgreSQL (Supabase).
+- ✅ Interface moderna e responsiva.
 
 ## Como Executar o Projeto
 
@@ -64,8 +69,14 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
      method TEXT NOT NULL CHECK (method IN ('Boleto', 'Pix', 'Cartão')),
      date DATE NOT NULL,
      month TEXT NOT NULL,
+     category TEXT,
+     description TEXT,
      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
    );
+   
+   -- Se a tabela já existir, adicione as novas colunas:
+   ALTER TABLE transactions ADD COLUMN IF NOT EXISTS category TEXT;
+   ALTER TABLE transactions ADD COLUMN IF NOT EXISTS description TEXT;
 
    -- Criar índice para melhorar performance das queries
    CREATE INDEX idx_transactions_user_month ON transactions(user_id, month);
