@@ -139,7 +139,17 @@ export default function Login() {
     try {
       setIsProcessingAuth(true);
 
-      const redirectTo = `${window.location.origin}/`;
+      // Usa a URL atual completa para o redirecionamento
+      // Remove qualquer hash ou query string existente para evitar conflitos
+      const redirectTo =
+        `${window.location.origin}${window.location.pathname}`.replace(
+          /\/$/,
+          ""
+        ) || `${window.location.origin}/`;
+
+      console.log(" URL de redirecionamento:", redirectTo);
+      console.log(" URL atual:", window.location.href);
+      console.log(" Origin:", window.location.origin);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -157,9 +167,13 @@ export default function Login() {
         console.error("Erro completo:", error);
         alert(`Erro ao fazer login: ${error.message}`);
         setIsProcessingAuth(false);
+        return;
       }
+
+      // Se não houver erro, o Supabase vai redirecionar automaticamente
+      // Não precisamos fazer nada aqui, o onAuthStateChange vai capturar
     } catch (error) {
-      console.error(" Erro ao fazer login:", error);
+      console.error("Erro ao fazer login:", error);
       alert(`Erro ao fazer login: ${error.message || error}`);
       setIsProcessingAuth(false);
     }

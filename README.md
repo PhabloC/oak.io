@@ -52,10 +52,19 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
    - Configure o Google OAuth em **Authentication → Providers**
    - **IMPORTANTE**: Configure as URLs de redirecionamento:
      - No Supabase: **Authentication → URL Configuration → Redirect URLs**
-       - Adicione: `http://localhost:5173/dashboard` e `http://localhost:5173/**`
+       - Para desenvolvimento, adicione:
+         - `http://localhost:5173/`
+         - `http://localhost:5173`
+         - `http://localhost:5173/**`
+       - Para produção, adicione também a URL do seu deploy (ex: Vercel):
+         - `https://oak-io.vercel.app/`
+         - `https://oak-io.vercel.app`
+         - `https://oak-io.vercel.app/**`
+         - Substitua `oak-io.vercel.app` pela URL real do seu projeto em produção
      - No Google Cloud Console: **APIs & Services → Credentials → OAuth 2.0 Client ID**
        - Adicione em **Authorized redirect URIs**: `https://[SEU-PROJETO-ID].supabase.co/auth/v1/callback`
        - Substitua `[SEU-PROJETO-ID]` pelo ID do seu projeto Supabase (encontre em Settings → API)
+   - **NOTA**: Se o login estiver redirecionando para localhost mesmo em produção, verifique se adicionou a URL de produção nas configurações do Supabase acima
    - Veja o arquivo `CONFIGURACAO_OAUTH.md` para instruções detalhadas sobre configuração do OAuth
    - Crie a tabela `transactions` no banco de dados com a seguinte estrutura SQL:
 
