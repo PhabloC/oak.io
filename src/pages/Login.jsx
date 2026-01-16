@@ -281,7 +281,8 @@ export default function Login() {
           {/* Mensagem de direitos reservados */}
           <div className="text-center mt-6 w-full">
             <p className="text-gray-500 text-xs sm:text-sm">
-              © 2025 Todos os direitos reservados. Phablo Carvalho
+              © {new Date().getFullYear()} Todos os direitos reservados. Phablo
+              Carvalho
             </p>
             <a
               href="https://github.com/PhabloC"
