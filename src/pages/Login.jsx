@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import Banner from "../assets/banner.jpg";
+import Banner from "../assets/banner.png";
 import Logo from "../assets/Header/logo2.png";
 import Google from "../assets/google.png";
 
@@ -186,6 +186,9 @@ export default function Login() {
         className="min-h-screen w-full flex items-center justify-center bg-cover bg-center relative"
         style={{
           backgroundImage: `url(${Banner})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
@@ -209,6 +212,9 @@ export default function Login() {
       className="min-h-screen w-full flex items-center justify-center bg-cover bg-center relative"
       style={{
         backgroundImage: `url(${Banner})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center right",
+        backgroundRepeat: "no-repeat",
       }}
     >
       {/* Overlay escuro */}
