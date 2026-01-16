@@ -96,7 +96,7 @@ export default function Login() {
         isProcessingRef.current = false;
         // Limpa o hash da URL
         if (window.location.hash) {
-          console.log("🧹 Limpando hash da URL");
+          console.log(" Limpando hash da URL");
           window.history.replaceState(null, "", window.location.pathname);
         }
         // Redireciona para o dashboard

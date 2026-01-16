@@ -3,12 +3,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
-import Grafico from "../components/Grafico/Grafico";
 import Cards from "../components/Cards/Cards";
 import Quadro from "../components/Quadro/Quadro";
 import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import { useTransactions } from "../context/TransactionsContext";
+import GraficoBarras from "../components/Grafico/GraficoBarras";
+import GraficoPizza from "../components/Grafico/GraficoPizza";
 
 // Função para obter o número de dias em um mês
 const getDaysInMonth = (month, year) => {
@@ -282,55 +283,6 @@ export default function Dashboard() {
     ],
   };
 
-  // Dados para o gráfico de barras por categoria (apenas gastos)
-  const getCategoryData = () => {
-    const gastosDoMes = transactions.filter(
-      (t) => t.type === "Gasto" && t.month === selectedMonth && t.category
-    );
-
-    if (gastosDoMes.length === 0) return null;
-
-    const categoryMap = {};
-    gastosDoMes.forEach((transaction) => {
-      const cat = transaction.category || "Sem categoria";
-      categoryMap[cat] = (categoryMap[cat] || 0) + Math.abs(transaction.value);
-    });
-
-    const sortedCategories = Object.entries(categoryMap)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10); // Top 10 categorias
-
-    const colors = [
-      "#F44336",
-      "#E91E63",
-      "#9C27B0",
-      "#673AB7",
-      "#3F51B5",
-      "#2196F3",
-      "#03A9F4",
-      "#00BCD4",
-      "#009688",
-      "#4CAF50",
-    ];
-
-    return {
-      labels: sortedCategories.map(([cat]) => cat),
-      datasets: [
-        {
-          label: "Gastos por Categoria",
-          data: sortedCategories.map(([, value]) => value),
-          backgroundColor: colors.slice(0, sortedCategories.length).map(
-            (color, index) => `${color}CC`
-          ),
-          borderColor: colors.slice(0, sortedCategories.length),
-          borderWidth: 2,
-        },
-      ],
-    };
-  };
-
-  const categoryData = getCategoryData();
-
   return (
     <div className="text-white flex overflow-hidden h-screen">
       {showSidebar && <Sidebar />}
@@ -374,12 +326,18 @@ export default function Dashboard() {
                 gastos={dashboardData.gastos}
                 investimentos={dashboardData.investimentos}
               />
-              <Grafico
-                lineData={lineData}
-                pieData={pieData}
-                categoryData={categoryData}
-                selectedMonth={selectedMonth}
-              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <GraficoBarras
+                  lineData={lineData}
+                  selectedMonth={selectedMonth}
+                  transactions={transactions}
+                />
+                <GraficoPizza
+                  pieData={pieData}
+                  selectedMonth={selectedMonth}
+                  transactions={transactions}
+                />
+              </div>
             </div>
             <Quadro selectedMonth={selectedMonth} />
           </div>
