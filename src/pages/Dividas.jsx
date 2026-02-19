@@ -9,6 +9,7 @@ import {
   FaEdit,
   FaCheck,
   FaMoneyBillWave,
+  FaCheckDouble,
 } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 
@@ -27,6 +28,7 @@ export default function Dividas() {
   const [activeTab, setActiveTab] = useState("pendentes");
   const [showQuitarModal, setShowQuitarModal] = useState(false);
   const [dividaToQuitar, setDividaToQuitar] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -410,12 +412,17 @@ export default function Dividas() {
 
   return (
     <div className="text-white flex min-h-screen">
-      {showSidebar && <Sidebar />}
+      {showSidebar && (
+        <Sidebar
+          isMobileOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
+      )}
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <Header />
-        <div className="p-4 ml-28 mt-4 flex flex-col pb-8">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Controle de Dívidas</h1>
+        <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <div className="p-4 md:ml-28 ml-0 flex flex-col pb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Controle de Dívidas</h1>
             <button
               onClick={() => setShowModal(true)}
               className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
