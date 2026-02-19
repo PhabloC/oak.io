@@ -9,25 +9,9 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const months = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
 const COLORS = ["#4CAF50", "#F44336", "#2196F3"];
 
 export default function GraficoPizza({
-  pieData,
   selectedMonth,
   transactions = [],
 }) {

@@ -11,25 +11,6 @@ import { useTransactions } from "../context/TransactionsContext";
 import GraficoBarras from "../components/Grafico/GraficoBarras";
 import GraficoPizza from "../components/Grafico/GraficoPizza";
 
-// Função para obter o número de dias em um mês
-const getDaysInMonth = (month, year) => {
-  const monthIndex = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro",
-  ].indexOf(month);
-  return new Date(year, monthIndex + 1, 0).getDate();
-};
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,8 +27,8 @@ export default function Dashboard() {
   const [successMessage, setSuccessMessage] = useState("");
   const [dashboardData, setDashboardData] = useState({
     saldo: 0,
-    gastos: 0,
-    investimentos: 0,
+    receita: 0,
+    despesa: 0,
   });
 
   const months = [
@@ -116,24 +97,21 @@ export default function Dashboard() {
     // Filtra transações pelo mês selecionado
     const filteredTransactions = transactions.filter((t) => t.month === month);
 
-    const saldo = filteredTransactions.reduce(
-      (acc, t) =>
-        t.type === "Ganho" ? acc + t.value : acc - Math.abs(t.value),
-      0
-    );
-    const gastos = filteredTransactions
+    const receita = filteredTransactions
+      .filter((t) => t.type === "Ganho")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const despesa = filteredTransactions
       .filter((t) => t.type === "Gasto")
       .reduce((acc, t) => acc + Math.abs(t.value), 0);
-    const investimentos = filteredTransactions
-      .filter((t) => t.type === "Investimento")
-      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const saldo = receita - despesa;
 
-    return { saldo, gastos, investimentos };
+    return { saldo, receita, despesa };
   };
 
   // Atualiza os dados do Dashboard sempre que as transações ou o mês mudarem
   useEffect(() => {
     loadTransactions(selectedMonth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth]);
 
   useEffect(() => {
@@ -194,101 +172,12 @@ export default function Dashboard() {
     setShowPopup(false);
   };
 
-  // Dados para o gráfico de linha
-  const year = new Date().getFullYear(); // Usa o ano atual
-  const daysInMonth = getDaysInMonth(selectedMonth, year);
-  const labels = Array.from({ length: daysInMonth }, (_, i) =>
-    (i + 1).toString()
-  );
-
-  const lineData = {
-    labels,
-    datasets: [
-      {
-        label: "Ganhos",
-        data: labels.map((day) =>
-          transactions
-            .filter(
-              (t) =>
-                t.type === "Ganho" &&
-                t.month === selectedMonth &&
-                t.date.endsWith(`-${day.padStart(2, "0")}`)
-            )
-            .reduce((acc, t) => acc + t.value, 0)
-        ),
-        borderColor: "#4CAF50",
-        backgroundColor: "rgba(76, 175, 80, 0.2)",
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Gastos",
-        data: labels.map((day) =>
-          transactions
-            .filter(
-              (t) =>
-                t.type === "Gasto" &&
-                t.month === selectedMonth &&
-                t.date.endsWith(`-${day.padStart(2, "0")}`)
-            )
-            .reduce((acc, t) => acc + Math.abs(t.value), 0)
-        ),
-        borderColor: "#F44336",
-        backgroundColor: "rgba(244, 67, 54, 0.2)",
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Investimentos",
-        data: labels.map((day) =>
-          transactions
-            .filter(
-              (t) =>
-                t.type === "Investimento" &&
-                t.month === selectedMonth &&
-                t.date.endsWith(`-${day.padStart(2, "0")}`)
-            )
-            .reduce((acc, t) => acc + Math.abs(t.value), 0)
-        ),
-        borderColor: "#2196F3",
-        backgroundColor: "rgba(33, 150, 243, 0.2)",
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
-
-  // Dados para o gráfico de pizza
-  const pieData = {
-    labels: ["Ganhos", "Gastos", "Investimentos"],
-    datasets: [
-      {
-        data: [
-          transactions
-            .filter((t) => t.type === "Ganho" && t.month === selectedMonth)
-            .reduce((acc, t) => acc + t.value, 0),
-          transactions
-            .filter((t) => t.type === "Gasto" && t.month === selectedMonth)
-            .reduce((acc, t) => acc + Math.abs(t.value), 0),
-          transactions
-            .filter(
-              (t) => t.type === "Investimento" && t.month === selectedMonth
-            )
-            .reduce((acc, t) => acc + Math.abs(t.value), 0),
-        ],
-        backgroundColor: ["#4CAF50", "#F44336", "#2196F3"],
-        borderColor: ["#ffffff"],
-        borderWidth: 2,
-      },
-    ],
-  };
-
   return (
-    <div className="text-white flex overflow-hidden h-screen">
+    <div className="text-white flex min-h-screen">
       {showSidebar && <Sidebar />}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-y-auto">
         <Header />
-        <div className="p-4 ml-28 mt-4 flex flex-col h-full">
+        <div className="p-4 ml-28 mt-4 flex flex-col pb-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
             <div className="flex items-center gap-4">
@@ -323,17 +212,15 @@ export default function Dashboard() {
             <div className="flex flex-col gap-8 flex-1">
               <Cards
                 saldo={dashboardData.saldo}
-                gastos={dashboardData.gastos}
-                investimentos={dashboardData.investimentos}
+                receita={dashboardData.receita}
+                despesa={dashboardData.despesa}
               />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-6">
                 <GraficoBarras
-                  lineData={lineData}
                   selectedMonth={selectedMonth}
                   transactions={transactions}
                 />
                 <GraficoPizza
-                  pieData={pieData}
                   selectedMonth={selectedMonth}
                   transactions={transactions}
                 />

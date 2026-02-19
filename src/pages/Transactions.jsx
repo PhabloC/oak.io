@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
+import Cards from "../components/Cards/Cards";
 import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import ModalEditor from "../components/Modal/ModalEditor";
 import ModalDeleted from "../components/Modal/ModalDeleted";
 import { useTransactions } from "../context/TransactionsContext";
 import TransactionsTable from "../components/Table/TransactionsTable";
-import { DEFAULT_CATEGORIES, getAllCategories } from "../utils/categories";
+import { getAllCategories } from "../utils/categories";
 import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 
 export default function Transactions() {
@@ -68,6 +69,7 @@ export default function Transactions() {
     };
 
     checkAndLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, selectedMonth]);
 
   // Ajuste os itens por página com base no tamanho da tela
@@ -333,6 +335,18 @@ export default function Transactions() {
     minValue ||
     maxValue;
 
+  // Calcula saldo, receita e despesa
+  const { saldo, receita, despesa } = useMemo(() => {
+    const receita = transactions
+      .filter((t) => t.type === "Ganho")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const despesa = transactions
+      .filter((t) => t.type === "Gasto")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const saldo = receita - despesa;
+    return { saldo, receita, despesa };
+  }, [transactions]);
+
   const paginate = (pageNumber) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
@@ -383,6 +397,11 @@ export default function Transactions() {
               {successMessage}
             </div>
           )}
+
+          {/* Cards de Saldo, Receita e Despesa */}
+          <div className="mb-6">
+            <Cards saldo={saldo} receita={receita} despesa={despesa} />
+          </div>
 
           {/* Filtros e Busca */}
           <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-4 sm:p-6 rounded-xl shadow-xl shadow-purple-500/10 border border-indigo-500/20 mb-6">

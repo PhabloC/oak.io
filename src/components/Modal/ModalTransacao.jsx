@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DEFAULT_CATEGORIES } from "../../utils/categories";
+import { IoClose } from "react-icons/io5";
 
 export default function ModalTransacao({ onClose, onSave }) {
   // Estados locais para os campos do formulário
@@ -14,7 +15,30 @@ export default function ModalTransacao({ onClose, onSave }) {
   // Resetar categoria quando o tipo mudar
   const handleTypeChange = (newType) => {
     setType(newType);
-    setCategory(""); // Resetar categoria quando tipo mudar
+    setCategory("");
+  };
+
+  // Formatação de moeda
+  const formatInputCurrency = (inputValue) => {
+    if (!inputValue) return "";
+    const numericValue = inputValue.replace(/\D/g, "");
+    if (!numericValue) return "";
+    const number = parseInt(numericValue, 10) / 100;
+    return number.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const parseCurrencyToNumber = (inputValue) => {
+    if (!inputValue) return 0;
+    const cleanValue = inputValue.replace(/\./g, "").replace(",", ".");
+    return parseFloat(cleanValue) || 0;
+  };
+
+  const handleValueChange = (inputValue) => {
+    const formatted = formatInputCurrency(inputValue);
+    setValue(formatted);
   };
 
   // Calcula a data máxima (hoje) no formato YYYY-MM-DD
@@ -23,8 +47,10 @@ export default function ModalTransacao({ onClose, onSave }) {
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
 
+    const numericValue = parseCurrencyToNumber(value);
+
     // Validação dos campos obrigatórios
-    if (!title || !value || !date) {
+    if (!title || !value || !date || numericValue <= 0) {
       alert("Por favor, preencha todos os campos obrigatórios!");
       return;
     }
@@ -40,7 +66,7 @@ export default function ModalTransacao({ onClose, onSave }) {
 
     const transaction = {
       title,
-      value: parseFloat(value),
+      value: numericValue,
       type,
       method,
       date,
@@ -59,13 +85,22 @@ export default function ModalTransacao({ onClose, onSave }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn">
       <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-xs sm:max-w-md border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
-        <div className="text-center mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
-            Adicionar Transação
-          </h2>
-          <p className="text-gray-300 text-sm">
-            Insira as informações abaixo:
-          </p>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              Adicionar Transação
+            </h2>
+            <p className="text-gray-300 text-sm">
+              Insira as informações abaixo:
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <IoClose className="text-2xl" />
+          </button>
         </div>
         <form className="space-y-5" onSubmit={handleSaveTransaction}>
           <div>
@@ -90,13 +125,12 @@ export default function ModalTransacao({ onClose, onSave }) {
                 R$
               </span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(e) => handleValueChange(e.target.value)}
                 className="w-full p-3 rounded-r-xl bg-gray-700/50 text-white border border-gray-600/50 border-l-0 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
-                placeholder="Ex: 200"
-                step="0.01"
-                min="0"
+                placeholder="0,00"
                 required
               />
             </div>
@@ -113,7 +147,6 @@ export default function ModalTransacao({ onClose, onSave }) {
             >
               <option value="Ganho">Ganho</option>
               <option value="Gasto">Gasto</option>
-              <option value="Investimento">Investimento</option>
             </select>
           </div>
           <div>

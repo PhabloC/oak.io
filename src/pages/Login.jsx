@@ -151,7 +151,7 @@ export default function Login() {
       console.log(" URL atual:", window.location.href);
       console.log(" Origin:", window.location.origin);
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: redirectTo,

@@ -2,6 +2,10 @@ import { useState } from "react";
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -32,11 +36,11 @@ const getDaysInMonth = (month, year) => {
 };
 
 export default function GraficoBarras({
-  lineData,
   selectedMonth,
   transactions = [],
 }) {
   const [viewMode, setViewMode] = useState("month"); // "month" ou "all"
+  const [chartType, setChartType] = useState("bar"); // "bar", "line" ou "area"
   const year = new Date().getFullYear();
 
   // Formatação customizada para tooltip
@@ -56,23 +60,18 @@ export default function GraficoBarras({
           t.date.endsWith(`-${day.padStart(2, "0")}`)
       );
 
-      const ganhos = dayTransactions
+      const receita = dayTransactions
         .filter((t) => t.type === "Ganho")
         .reduce((acc, t) => acc + t.value, 0);
 
-      const gastos = dayTransactions
+      const despesa = dayTransactions
         .filter((t) => t.type === "Gasto")
-        .reduce((acc, t) => acc + Math.abs(t.value), 0);
-
-      const investimentos = dayTransactions
-        .filter((t) => t.type === "Investimento")
         .reduce((acc, t) => acc + Math.abs(t.value), 0);
 
       return {
         label: day,
-        Ganhos: ganhos,
-        Gastos: gastos,
-        Investimentos: investimentos,
+        Receita: receita,
+        Despesa: despesa,
       };
     });
   };
@@ -82,24 +81,19 @@ export default function GraficoBarras({
     return months.map((month) => {
       const monthTransactions = transactions.filter((t) => t.month === month);
 
-      const ganhos = monthTransactions
+      const receita = monthTransactions
         .filter((t) => t.type === "Ganho")
         .reduce((acc, t) => acc + t.value, 0);
 
-      const gastos = monthTransactions
+      const despesa = monthTransactions
         .filter((t) => t.type === "Gasto")
         .reduce((acc, t) => acc + Math.abs(t.value), 0);
 
-      const investimentos = monthTransactions
-        .filter((t) => t.type === "Investimento")
-        .reduce((acc, t) => acc + Math.abs(t.value), 0);
-
       return {
-        label: month.substring(0, 3), // Primeiras 3 letras do mês
+        label: month.substring(0, 3),
         fullMonth: month,
-        Ganhos: ganhos,
-        Gastos: gastos,
-        Investimentos: investimentos,
+        Receita: receita,
+        Despesa: despesa,
       };
     });
   };
@@ -128,95 +122,177 @@ export default function GraficoBarras({
     return null;
   };
 
+  const commonProps = {
+    data: chartData,
+    margin: { top: 10, right: 10, left: 0, bottom: 5 },
+  };
+
+  const renderChart = () => {
+    const commonElements = (
+      <>
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="rgba(255, 255, 255, 0.05)"
+          vertical={false}
+        />
+        <XAxis
+          dataKey="label"
+          stroke="#9ca3af"
+          style={{ fontSize: "11px" }}
+          tick={{ fill: "#9ca3af" }}
+          axisLine={{ stroke: "rgba(255, 255, 255, 0.1)" }}
+        />
+        <YAxis
+          stroke="#9ca3af"
+          style={{ fontSize: "11px" }}
+          tick={{ fill: "#9ca3af" }}
+          tickFormatter={(value) => {
+            if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}k`;
+            return formatCurrency(value);
+          }}
+          axisLine={{ stroke: "rgba(255, 255, 255, 0.1)" }}
+        />
+        <Tooltip content={<CustomTooltip />} />
+        <Legend
+          wrapperStyle={{ paddingTop: "20px" }}
+          iconType={chartType === "bar" ? "square" : "line"}
+          iconSize={12}
+          formatter={(value) => (
+            <span className="text-gray-300 text-xs">{value}</span>
+          )}
+        />
+      </>
+    );
+
+    if (chartType === "bar") {
+      return (
+        <BarChart {...commonProps}>
+          {commonElements}
+          <Bar dataKey="Receita" fill="#10B981" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Despesa" fill="#EF4444" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+
+    if (chartType === "line") {
+      return (
+        <LineChart {...commonProps}>
+          {commonElements}
+          <Line
+            type="monotone"
+            dataKey="Receita"
+            stroke="#10B981"
+            strokeWidth={2}
+            dot={{ fill: "#10B981", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "#10B981", strokeWidth: 2 }}
+          />
+          <Line
+            type="monotone"
+            dataKey="Despesa"
+            stroke="#EF4444"
+            strokeWidth={2}
+            dot={{ fill: "#EF4444", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "#EF4444", strokeWidth: 2 }}
+          />
+        </LineChart>
+      );
+    }
+
+    if (chartType === "area") {
+      return (
+        <AreaChart {...commonProps}>
+          {commonElements}
+          <Area
+            type="monotone"
+            dataKey="Receita"
+            stroke="#10B981"
+            fill="#10B981"
+            fillOpacity={0.3}
+            strokeWidth={2}
+          />
+          <Area
+            type="monotone"
+            dataKey="Despesa"
+            stroke="#EF4444"
+            fill="#EF4444"
+            fillOpacity={0.3}
+            strokeWidth={2}
+          />
+        </AreaChart>
+      );
+    }
+  };
+
   return (
     <Card className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md border-indigo-500/20 shadow-xl shadow-purple-500/10">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-white text-lg font-semibold">
-            {viewMode === "month"
-              ? `Transações de ${selectedMonth}`
-              : "Transações por Mês"}
-          </CardTitle>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white text-lg font-semibold">
+              {viewMode === "month"
+                ? `Transações de ${selectedMonth}`
+                : "Transações por Mês"}
+            </CardTitle>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode("month")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  viewMode === "month"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                Mês
+              </button>
+              <button
+                onClick={() => setViewMode("all")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  viewMode === "all"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                Todos
+              </button>
+            </div>
+          </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setViewMode("month")}
+              onClick={() => setChartType("bar")}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                viewMode === "month"
-                  ? "bg-indigo-600 text-white"
+                chartType === "bar"
+                  ? "bg-emerald-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
               }`}
             >
-              Mês
+              Barras
             </button>
             <button
-              onClick={() => setViewMode("all")}
+              onClick={() => setChartType("line")}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                viewMode === "all"
-                  ? "bg-indigo-600 text-white"
+                chartType === "line"
+                  ? "bg-emerald-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
               }`}
             >
-              Todos
+              Linha
+            </button>
+            <button
+              onClick={() => setChartType("area")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                chartType === "area"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
+              }`}
+            >
+              Área
             </button>
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart
-            data={chartData}
-            margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="rgba(255, 255, 255, 0.05)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="label"
-              stroke="#9ca3af"
-              style={{ fontSize: "11px" }}
-              tick={{ fill: "#9ca3af" }}
-              axisLine={{ stroke: "rgba(255, 255, 255, 0.1)" }}
-            />
-            <YAxis
-              stroke="#9ca3af"
-              style={{ fontSize: "11px" }}
-              tick={{ fill: "#9ca3af" }}
-              tickFormatter={(value) => {
-                if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}k`;
-                return formatCurrency(value);
-              }}
-              axisLine={{ stroke: "rgba(255, 255, 255, 0.1)" }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              wrapperStyle={{ paddingTop: "20px" }}
-              iconType="square"
-              iconSize={12}
-              formatter={(value) => (
-                <span className="text-gray-300 text-xs">{value}</span>
-              )}
-            />
-            <Bar
-              dataKey="Ganhos"
-              stackId="a"
-              fill="#4CAF50"
-              radius={[0, 0, 0, 0]}
-            />
-            <Bar
-              dataKey="Gastos"
-              stackId="a"
-              fill="#F44336"
-              radius={[0, 0, 0, 0]}
-            />
-            <Bar
-              dataKey="Investimentos"
-              stackId="a"
-              fill="#2196F3"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
+          {renderChart()}
         </ResponsiveContainer>
       </CardContent>
     </Card>
