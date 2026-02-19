@@ -12,11 +12,16 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
 
 ## Funcionalidades
 
-- Controle de entradas e saídas de capital.
-- Gerenciamento de investimentos.
-- Login com Google utilizando Supabase OAuth.
-- Armazenamento seguro de dados no PostgreSQL (Supabase).
-- Interface moderna e responsiva.
+- ✅ Controle de entradas e saídas de capital.
+- ✅ Gerenciamento de investimentos.
+- ✅ **Categorias personalizadas** - Organize suas transações por categorias (Alimentação, Transporte, Saúde, etc.).
+- ✅ **Campo de descrição** - Adicione notas e observações às suas transações.
+- ✅ **Filtros e busca avançada** - Filtre transações por tipo, categoria, método de pagamento, valor e busque por título/descrição.
+- ✅ **Gráficos por categoria** - Visualize seus gastos por categoria no dashboard.
+- ✅ Dashboard com gráficos interativos (linha, pizza e barras).
+- ✅ Login com Google utilizando Supabase OAuth.
+- ✅ Armazenamento seguro de dados no PostgreSQL (Supabase).
+- ✅ Interface moderna e responsiva.
 
 ## Como Executar o Projeto
 
@@ -47,10 +52,19 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
    - Configure o Google OAuth em **Authentication → Providers**
    - **IMPORTANTE**: Configure as URLs de redirecionamento:
      - No Supabase: **Authentication → URL Configuration → Redirect URLs**
-       - Adicione: `http://localhost:5173/dashboard` e `http://localhost:5173/**`
+       - Para desenvolvimento, adicione:
+         - `http://localhost:5173/`
+         - `http://localhost:5173`
+         - `http://localhost:5173/**`
+       - Para produção, adicione também a URL do seu deploy (ex: Vercel):
+         - `https://oak-io.vercel.app/`
+         - `https://oak-io.vercel.app`
+         - `https://oak-io.vercel.app/**`
+         - Substitua `oak-io.vercel.app` pela URL real do seu projeto em produção
      - No Google Cloud Console: **APIs & Services → Credentials → OAuth 2.0 Client ID**
        - Adicione em **Authorized redirect URIs**: `https://[SEU-PROJETO-ID].supabase.co/auth/v1/callback`
        - Substitua `[SEU-PROJETO-ID]` pelo ID do seu projeto Supabase (encontre em Settings → API)
+   - **NOTA**: Se o login estiver redirecionando para localhost mesmo em produção, verifique se adicionou a URL de produção nas configurações do Supabase acima
    - Veja o arquivo `CONFIGURACAO_OAUTH.md` para instruções detalhadas sobre configuração do OAuth
    - Crie a tabela `transactions` no banco de dados com a seguinte estrutura SQL:
 
@@ -64,8 +78,14 @@ Este é um projeto SaaS de controle financeiro desenvolvido com **React**, **Tai
      method TEXT NOT NULL CHECK (method IN ('Boleto', 'Pix', 'Cartão')),
      date DATE NOT NULL,
      month TEXT NOT NULL,
+     category TEXT,
+     description TEXT,
      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
    );
+   
+   -- Se a tabela já existir, adicione as novas colunas:
+   ALTER TABLE transactions ADD COLUMN IF NOT EXISTS category TEXT;
+   ALTER TABLE transactions ADD COLUMN IF NOT EXISTS description TEXT;
 
    -- Criar índice para melhorar performance das queries
    CREATE INDEX idx_transactions_user_month ON transactions(user_id, month);

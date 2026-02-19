@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
 import { supabase } from "../../supabaseClient";
+import { DEFAULT_CATEGORIES } from "../../utils/categories";
 
 // Função para obter o nome do mês a partir de uma data YYYY-MM-DD
 const getMonthName = (dateString) => {
@@ -61,6 +62,8 @@ export default function ModalEditor({
   const [type, setType] = useState("Ganho");
   const [method, setMethod] = useState("Boleto");
   const [date, setDate] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
 
   // Calcula a data máxima (hoje) no formato YYYY-MM-DD
   const maxDate = new Date().toISOString().split("T")[0];
@@ -73,8 +76,19 @@ export default function ModalEditor({
       setType(transaction.type || "Ganho");
       setMethod(transaction.method || "Boleto");
       setDate(transaction.date || "");
+      setCategory(transaction.category || "");
+      setDescription(transaction.description || "");
     }
   }, [transaction]);
+
+  // Resetar categoria quando o tipo mudar
+  const handleTypeChange = (newType) => {
+    setType(newType);
+    // Manter categoria apenas se ela existir para o novo tipo
+    if (category && !DEFAULT_CATEGORIES[newType]?.includes(category)) {
+      setCategory("");
+    }
+  };
 
   const handleSaveEdit = async () => {
     // Validação dos campos obrigatórios
@@ -107,6 +121,8 @@ export default function ModalEditor({
       method,
       date: transactionDate,
       month: capitalizedMonth,
+      category: category || null,
+      description: description || null,
     };
 
     await editTransaction(transaction.id, updatedTransaction);
@@ -177,7 +193,7 @@ export default function ModalEditor({
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => handleTypeChange(e.target.value)}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
             >
@@ -202,6 +218,23 @@ export default function ModalEditor({
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-indigo-200">
+              Categoria
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
+            >
+              <option value="">Selecione uma categoria</option>
+              {(DEFAULT_CATEGORIES[type] || []).map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
               Data
             </label>
             <input
@@ -211,6 +244,18 @@ export default function ModalEditor({
               max={maxDate}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
               required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
+              Descrição (opcional)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500 resize-none"
+              placeholder="Adicione observações ou notas sobre esta transação..."
+              rows="3"
             />
           </div>
         </form>

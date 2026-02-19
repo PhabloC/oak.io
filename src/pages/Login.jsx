@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import Banner from "../assets/banner.jpg";
+import Banner from "../assets/banner.png";
 import Logo from "../assets/Header/logo2.png";
 import Google from "../assets/google.png";
 
@@ -96,7 +96,7 @@ export default function Login() {
         isProcessingRef.current = false;
         // Limpa o hash da URL
         if (window.location.hash) {
-          console.log("🧹 Limpando hash da URL");
+          console.log(" Limpando hash da URL");
           window.history.replaceState(null, "", window.location.pathname);
         }
         // Redireciona para o dashboard
@@ -139,9 +139,19 @@ export default function Login() {
     try {
       setIsProcessingAuth(true);
 
-      const redirectTo = `${window.location.origin}/`;
+      // Usa a URL atual completa para o redirecionamento
+      // Remove qualquer hash ou query string existente para evitar conflitos
+      const redirectTo =
+        `${window.location.origin}${window.location.pathname}`.replace(
+          /\/$/,
+          ""
+        ) || `${window.location.origin}/`;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      console.log(" URL de redirecionamento:", redirectTo);
+      console.log(" URL atual:", window.location.href);
+      console.log(" Origin:", window.location.origin);
+
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: redirectTo,
@@ -157,9 +167,13 @@ export default function Login() {
         console.error("Erro completo:", error);
         alert(`Erro ao fazer login: ${error.message}`);
         setIsProcessingAuth(false);
+        return;
       }
+
+      // Se não houver erro, o Supabase vai redirecionar automaticamente
+      // Não precisamos fazer nada aqui, o onAuthStateChange vai capturar
     } catch (error) {
-      console.error(" Erro ao fazer login:", error);
+      console.error("Erro ao fazer login:", error);
       alert(`Erro ao fazer login: ${error.message || error}`);
       setIsProcessingAuth(false);
     }
@@ -172,6 +186,9 @@ export default function Login() {
         className="min-h-screen w-full flex items-center justify-center bg-cover bg-center relative"
         style={{
           backgroundImage: `url(${Banner})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
@@ -195,6 +212,9 @@ export default function Login() {
       className="min-h-screen w-full flex items-center justify-center bg-cover bg-center relative"
       style={{
         backgroundImage: `url(${Banner})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center right",
+        backgroundRepeat: "no-repeat",
       }}
     >
       {/* Overlay escuro */}
@@ -261,7 +281,8 @@ export default function Login() {
           {/* Mensagem de direitos reservados */}
           <div className="text-center mt-6 w-full">
             <p className="text-gray-500 text-xs sm:text-sm">
-              © 2025 Todos os direitos reservados. Phablo Carvalho
+              © {new Date().getFullYear()} Todos os direitos reservados. Phablo
+              Carvalho
             </p>
             <a
               href="https://github.com/PhabloC"

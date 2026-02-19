@@ -50,6 +50,9 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
               Método
             </th>
             <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wider">
+              Categoria
+            </th>
+            <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wider">
               Data
             </th>
             <th className="px-4 sm:px-6 py-4 text-right text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wider">
@@ -64,7 +67,7 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
           {transactions.length === 0 ? (
             <tr>
               <td
-                colSpan="6"
+                colSpan="7"
                 className="px-4 sm:px-6 py-12 text-center text-gray-400 text-sm sm:text-base"
               >
                 <div className="flex flex-col items-center justify-center gap-2">
@@ -106,6 +109,15 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
                   >
                     {transaction.method}
                   </span>
+                </td>
+                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  {transaction.category ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs sm:text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      {transaction.category}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 text-xs sm:text-sm">-</span>
+                  )}
                 </td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-300">
                   {formatDate(transaction.date)}

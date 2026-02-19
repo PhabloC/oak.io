@@ -2,6 +2,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoHeader from "../../assets/Header/logo2.png";
 import { TbTransitionRightFilled } from "react-icons/tb";
 import { MdDashboard } from "react-icons/md";
+import { GiTargetArrows } from "react-icons/gi";
+import { FaFileInvoiceDollar } from "react-icons/fa";
 import { IoExit } from "react-icons/io5";
 import Tree from "../../assets/tree.png";
 import { useState } from "react";
@@ -96,6 +98,64 @@ export default function Sidebar() {
             Transações
           </span>
           {location.pathname === "/transacoes" && (
+            <div className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+          )}
+        </Link>
+
+        <Link
+          to="/metas"
+          className={`flex items-center px-4 py-3 rounded-xl w-full transition-all duration-200 ${
+            location.pathname === "/metas"
+              ? "bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg shadow-purple-500/30 scale-[1.02]"
+              : "hover:bg-indigo-800/50 hover:scale-[1.01]"
+          } group relative overflow-hidden`}
+        >
+          <GiTargetArrows
+            className={`text-2xl transition-all duration-200 ${
+              location.pathname === "/metas"
+                ? "text-white"
+                : "text-indigo-300"
+            } ${isExpanded ? "mr-3" : "mx-auto"}`}
+          />
+          <span
+            className={`text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+              isExpanded
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-4 w-0 overflow-hidden"
+            }`}
+          >
+            Metas
+          </span>
+          {location.pathname === "/metas" && (
+            <div className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+          )}
+        </Link>
+
+        <Link
+          to="/dividas"
+          className={`flex items-center px-4 py-3 rounded-xl w-full transition-all duration-200 ${
+            location.pathname === "/dividas"
+              ? "bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg shadow-purple-500/30 scale-[1.02]"
+              : "hover:bg-indigo-800/50 hover:scale-[1.01]"
+          } group relative overflow-hidden`}
+        >
+          <FaFileInvoiceDollar
+            className={`text-2xl transition-all duration-200 ${
+              location.pathname === "/dividas"
+                ? "text-white"
+                : "text-indigo-300"
+            } ${isExpanded ? "mr-3" : "mx-auto"}`}
+          />
+          <span
+            className={`text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+              isExpanded
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-4 w-0 overflow-hidden"
+            }`}
+          >
+            Dívidas
+          </span>
+          {location.pathname === "/dividas" && (
             <div className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
           )}
         </Link>
