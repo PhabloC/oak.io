@@ -1,15 +1,46 @@
-import { useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
 
-const COLORS = ["#4CAF50", "#F44336", "#2196F3"];
+import { useState, useMemo } from "react";
+import { Pie, PieChart } from "recharts";
+import { TrendingUp } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
+const chartConfig = {
+  value: {
+    label: "Valor",
+  },
+  ganhos: {
+    label: "Ganhos",
+    color: "#22c55e",
+  },
+  gastos: {
+    label: "Gastos",
+    color: "#ef4444",
+  },
+  investimentos: {
+    label: "Investimentos",
+    color: "#3b82f6",
+  },
+};
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  }).format(value);
 
 export default function GraficoPizza({
   selectedMonth,
@@ -17,85 +48,61 @@ export default function GraficoPizza({
 }) {
   const [viewMode, setViewMode] = useState("month"); // "month" ou "all"
 
-  // Formatação customizada para tooltip
-  const formatCurrency = (value) => `R$ ${value.toFixed(2)}`;
+  const chartData = useMemo(() => {
+    const filterByMonth = (t) => t.month === selectedMonth;
 
-  // Dados para visualização por mês
-  const getMonthData = () => {
     const ganhos = transactions
-      .filter((t) => t.type === "Ganho" && t.month === selectedMonth)
+      .filter((t) => t.type === "Ganho" && (viewMode === "all" || filterByMonth(t)))
       .reduce((acc, t) => acc + t.value, 0);
 
     const gastos = transactions
-      .filter((t) => t.type === "Gasto" && t.month === selectedMonth)
+      .filter((t) => t.type === "Gasto" && (viewMode === "all" || filterByMonth(t)))
       .reduce((acc, t) => acc + Math.abs(t.value), 0);
 
     const investimentos = transactions
-      .filter((t) => t.type === "Investimento" && t.month === selectedMonth)
+      .filter(
+        (t) =>
+          t.type === "Investimento" && (viewMode === "all" || filterByMonth(t))
+      )
       .reduce((acc, t) => acc + Math.abs(t.value), 0);
 
     return [
-      { name: "Ganhos", value: ganhos, color: COLORS[0] },
-      { name: "Gastos", value: gastos, color: COLORS[1] },
-      { name: "Investimentos", value: investimentos, color: COLORS[2] },
-    ].filter((item) => item.value > 0); // Remove itens com valor zero
-  };
+      { category: "ganhos", value: ganhos, fill: "var(--color-ganhos)" },
+      { category: "gastos", value: gastos, fill: "var(--color-gastos)" },
+      {
+        category: "investimentos",
+        value: investimentos,
+        fill: "var(--color-investimentos)",
+      },
+    ].filter((item) => item.value > 0);
+  }, [transactions, selectedMonth, viewMode]);
 
-  // Dados para visualização de todos os meses
-  const getAllMonthsData = () => {
-    const ganhos = transactions
-      .filter((t) => t.type === "Ganho")
-      .reduce((acc, t) => acc + t.value, 0);
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+  const hasGanhos = chartData.some((d) => d.category === "ganhos");
+  const trendText =
+    hasGanhos && total > 0
+      ? `Total de ${formatCurrency(total)} no período`
+      : "Adicione transações para ver a distribuição";
 
-    const gastos = transactions
-      .filter((t) => t.type === "Gasto")
-      .reduce((acc, t) => acc + Math.abs(t.value), 0);
-
-    const investimentos = transactions
-      .filter((t) => t.type === "Investimento")
-      .reduce((acc, t) => acc + Math.abs(t.value), 0);
-
-    return [
-      { name: "Ganhos", value: ganhos, color: COLORS[0] },
-      { name: "Gastos", value: gastos, color: COLORS[1] },
-      { name: "Investimentos", value: investimentos, color: COLORS[2] },
-    ].filter((item) => item.value > 0); // Remove itens com valor zero
-  };
-
-  const pieChartData =
-    viewMode === "month" ? getMonthData() : getAllMonthsData();
-
-  const PieTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      const total = pieChartData.reduce((sum, item) => sum + item.value, 0);
-      const percentage =
-        total > 0 ? ((data.value / total) * 100).toFixed(1) : 0;
-      return (
-        <div className="bg-gray-900/95 border border-gray-700 rounded-lg p-3 shadow-xl">
-          <p className="text-white font-semibold text-sm mb-1">{data.name}</p>
-          <p className="text-white text-sm">
-            {formatCurrency(data.value)} ({percentage}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Se não houver dados, mostra mensagem
-  if (pieChartData.length === 0) {
+  if (chartData.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md border-indigo-500/20 shadow-xl shadow-purple-500/10">
-        <CardHeader className="pb-3 px-3 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <CardTitle className="text-white text-base sm:text-lg font-semibold">
-              Distribuição de Transações
-            </CardTitle>
+      <Card className="flex flex-col border-indigo-500/20 bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 shadow-xl shadow-purple-500/10 backdrop-blur-md">
+        <CardHeader className="items-center pb-0">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-white">
+                Distribuição de Transações
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                {viewMode === "month"
+                  ? selectedMonth
+                  : "Todos os meses"}
+              </CardDescription>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode("month")}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                   viewMode === "month"
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -105,7 +112,7 @@ export default function GraficoPizza({
               </button>
               <button
                 onClick={() => setViewMode("all")}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                   viewMode === "all"
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -116,30 +123,35 @@ export default function GraficoPizza({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 px-2 sm:px-6">
-          <div className="flex items-center justify-center h-[280px] sm:h-[320px]">
-            <p className="text-gray-400 text-sm">
-              Nenhuma transação encontrada
-            </p>
-          </div>
+        <CardContent className="flex flex-1 items-center justify-center py-12">
+          <p className="text-gray-400 text-sm">
+            Nenhuma transação encontrada
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md border-indigo-500/20 shadow-xl shadow-purple-500/10">
-      <CardHeader className="pb-3 px-3 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <CardTitle className="text-white text-base sm:text-lg font-semibold">
-            {viewMode === "month"
-              ? `Distribuição de ${selectedMonth}`
-              : "Distribuição Geral"}
-          </CardTitle>
+    <Card className="flex flex-col border-indigo-500/20 bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 shadow-xl shadow-purple-500/10 backdrop-blur-md">
+      <CardHeader className="items-center pb-0">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle className="text-white">
+              {viewMode === "month"
+                ? `Distribuição de ${selectedMonth}`
+                : "Distribuição Geral"}
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              {viewMode === "month"
+                ? `${selectedMonth} - ${new Date().getFullYear()}`
+                : `Total geral - ${new Date().getFullYear()}`}
+            </CardDescription>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode("month")}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 viewMode === "month"
                   ? "bg-indigo-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -149,7 +161,7 @@ export default function GraficoPizza({
             </button>
             <button
               onClick={() => setViewMode("all")}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 viewMode === "all"
                   ? "bg-indigo-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -160,43 +172,45 @@ export default function GraficoPizza({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0 px-2 sm:px-6">
-        <ResponsiveContainer width="100%" height={280} className="sm:!h-[320px]">
+      <CardContent className="flex-1 pb-0">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[250px] pb-0 [&_.recharts-pie-label-text]:fill-white"
+        >
           <PieChart>
-            <Pie
-              data={pieChartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => {
-                if (percent < 0.05) return "";
-                return `${name}: ${(percent * 100).toFixed(0)}%`;
-              }}
-              outerRadius={90}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {pieChartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.color}
-                  stroke="#1f2937"
-                  strokeWidth={2}
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  hideLabel
+                  formatter={(value) => formatCurrency(value)}
+                  nameKey="category"
                 />
-              ))}
-            </Pie>
-            <Tooltip content={<PieTooltip />} />
-            <Legend
-              wrapperStyle={{ paddingTop: "10px" }}
-              iconType="square"
-              iconSize={10}
-              formatter={(value) => (
-                <span className="text-gray-300 text-xs">{value}</span>
-              )}
+              }
+            />
+            <Pie
+              data={chartData}
+              dataKey="value"
+              label={({ category, percent }) =>
+                percent >= 0.05
+                  ? `${chartConfig[category]?.label ?? category}: ${(percent * 100).toFixed(0)}%`
+                  : ""
+              }
+              nameKey="category"
             />
           </PieChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 font-medium leading-none text-indigo-300">
+          <TrendingUp className="h-4 w-4" />
+          {trendText}
+        </div>
+        <div className="leading-none text-gray-500">
+          {viewMode === "month"
+            ? `Mostrando transações de ${selectedMonth}`
+            : "Mostrando total de todas as transações"}
+        </div>
+      </CardFooter>
     </Card>
   );
 }
