@@ -7,6 +7,7 @@ import { TransactionsProvider } from "./context/TransactionsContext";
 import Transactions from "./pages/Transactions";
 import Metas from "./pages/Metas";
 import Dividas from "./pages/Dividas";
+import Investimento from "./pages/Investimento";
 
 export default function App() {
   return (
@@ -46,6 +47,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <Dividas />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/investimento"
+                  element={
+                    <ProtectedRoute>
+                      <Investimento />
                     </ProtectedRoute>
                   }
                 />
