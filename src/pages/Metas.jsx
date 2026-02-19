@@ -332,37 +332,47 @@ export default function Metas() {
     ],
   };
 
-  const searchImages = (query) => {
+  const searchImages = async (query) => {
     if (!query.trim()) {
       setImageResults([]);
       return;
     }
 
+    const apiKey = import.meta.env.VITE_PEXELS_API_KEY;
     setLoadingImages(true);
-    
-    setTimeout(() => {
-      const searchLower = query.toLowerCase();
-      let results = [];
 
-      if (searchLower.includes("econom") || searchLower.includes("poupar") || searchLower.includes("dinheiro")) {
-        results = predefinedImages.economia;
-      } else if (searchLower.includes("viag") || searchLower.includes("praia") || searchLower.includes("férias")) {
-        results = predefinedImages.viagem;
-      } else if (searchLower.includes("educa") || searchLower.includes("estud") || searchLower.includes("livro") || searchLower.includes("curso")) {
-        results = predefinedImages.educação;
-      } else if (searchLower.includes("compr") || searchLower.includes("shopping") || searchLower.includes("loja")) {
-        results = predefinedImages.compras;
-      } else if (searchLower.includes("invest") || searchLower.includes("ação") || searchLower.includes("bolsa") || searchLower.includes("cripto")) {
-        results = predefinedImages.investimento;
-      } else if (searchLower.includes("emergên") || searchLower.includes("reserva") || searchLower.includes("segur")) {
-        results = predefinedImages.emergência;
+    try {
+      if (apiKey) {
+        const res = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15`,
+          { headers: { Authorization: apiKey } }
+        );
+        const data = await res.json();
+        const results = (data.photos || []).map((photo) => ({
+          id: String(photo.id),
+          url: photo.src.large2x || photo.src.large || photo.src.original,
+          thumb: photo.src.small || photo.src.medium,
+          alt: photo.alt || query,
+        }));
+        setImageResults(results);
       } else {
-        results = predefinedImages.outros;
+        const searchLower = query.toLowerCase();
+        let results = [];
+        if (searchLower.includes("econom") || searchLower.includes("poupar") || searchLower.includes("dinheiro")) results = predefinedImages.economia;
+        else if (searchLower.includes("viag") || searchLower.includes("praia") || searchLower.includes("férias")) results = predefinedImages.viagem;
+        else if (searchLower.includes("educa") || searchLower.includes("estud") || searchLower.includes("livro") || searchLower.includes("curso")) results = predefinedImages.educação;
+        else if (searchLower.includes("compr") || searchLower.includes("shopping") || searchLower.includes("loja")) results = predefinedImages.compras;
+        else if (searchLower.includes("invest") || searchLower.includes("ação") || searchLower.includes("bolsa") || searchLower.includes("cripto")) results = predefinedImages.investimento;
+        else if (searchLower.includes("emergên") || searchLower.includes("reserva") || searchLower.includes("segur")) results = predefinedImages.emergência;
+        else results = predefinedImages.outros;
+        setImageResults(results);
       }
-
-      setImageResults(results);
+    } catch (err) {
+      console.error("Erro ao buscar imagens:", err);
+      setImageResults(predefinedImages.outros);
+    } finally {
       setLoadingImages(false);
-    }, 300);
+    }
   };
 
   const handleSelectImage = (imageUrl) => {
