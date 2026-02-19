@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DEFAULT_CATEGORIES } from "../../utils/categories";
 import { IoClose } from "react-icons/io5";
+import { sanitizeText, sanitizeNumber, validateTransactionForm } from "../../utils/sanitize";
 
 export default function ModalTransacao({ onClose, onSave }) {
   // Estados locais para os campos do formulário
@@ -47,15 +48,22 @@ export default function ModalTransacao({ onClose, onSave }) {
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
 
-    const numericValue = parseCurrencyToNumber(value);
+    const numericValue = sanitizeNumber(parseCurrencyToNumber(value), 0.01, 999999999.99);
+    const cleanTitle = sanitizeText(title, 100);
+    const cleanDescription = sanitizeText(description, 500);
 
-    // Validação dos campos obrigatórios
-    if (!title || !value || !date || numericValue <= 0) {
-      alert("Por favor, preencha todos os campos obrigatórios!");
+    const errors = validateTransactionForm({
+      title: cleanTitle,
+      value: numericValue,
+      date,
+      type,
+    });
+
+    if (errors.length > 0) {
+      alert(errors.join("\n"));
       return;
     }
 
-    // Validação para impedir datas futuras
     const selectedDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -65,20 +73,20 @@ export default function ModalTransacao({ onClose, onSave }) {
     }
 
     const transaction = {
-      title,
+      title: cleanTitle,
       value: numericValue,
       type,
       method,
       date,
       category: category || null,
-      description: description || null,
+      description: cleanDescription || null,
     };
 
     try {
       await onSave(transaction);
       onClose();
     } catch (error) {
-      console.error("Erro ao salvar a transação:", error);
+      alert("Ocorreu um erro ao salvar a transação. Tente novamente.");
     }
   };
 
@@ -111,6 +119,7 @@ export default function ModalTransacao({ onClose, onSave }) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={100}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
               placeholder="Ex: Compra no mercado"
               required
@@ -200,6 +209,7 @@ export default function ModalTransacao({ onClose, onSave }) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500 resize-none"
               placeholder="Adicione observações ou notas sobre esta transação..."
               rows="3"
