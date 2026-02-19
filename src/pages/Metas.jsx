@@ -155,7 +155,7 @@ export default function Metas() {
 
       handleCloseModal();
       setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
+    } catch {
       alert("Ocorreu um erro ao salvar a meta. Tente novamente.");
     }
   };

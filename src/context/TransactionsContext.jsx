@@ -12,4 +12,5 @@ export const TransactionsProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook is used with TransactionsProvider
 export const useTransactions = () => useContext(TransactionsContext);

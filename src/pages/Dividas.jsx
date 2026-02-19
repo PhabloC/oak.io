@@ -186,7 +186,7 @@ export default function Dividas() {
 
       handleCloseModal();
       setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
+    } catch {
       alert("Ocorreu um erro ao salvar a dívida. Tente novamente.");
     }
   };

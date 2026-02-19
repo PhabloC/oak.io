@@ -85,7 +85,7 @@ export default function ModalTransacao({ onClose, onSave }) {
     try {
       await onSave(transaction);
       onClose();
-    } catch (error) {
+    } catch {
       alert("Ocorreu um erro ao salvar a transação. Tente novamente.");
     }
   };

@@ -161,7 +161,7 @@ export default function Login() {
         setIsProcessingAuth(false);
         return;
       }
-    } catch (error) {
+    } catch {
       alert("Erro ao fazer login. Tente novamente.");
       setIsProcessingAuth(false);
     }
