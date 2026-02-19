@@ -87,15 +87,15 @@ export default function GraficoPizza({
   if (pieChartData.length === 0) {
     return (
       <Card className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md border-indigo-500/20 shadow-xl shadow-purple-500/10">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white text-lg font-semibold">
+        <CardHeader className="pb-3 px-3 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="text-white text-base sm:text-lg font-semibold">
               Distribuição de Transações
             </CardTitle>
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode("month")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                   viewMode === "month"
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -105,7 +105,7 @@ export default function GraficoPizza({
               </button>
               <button
                 onClick={() => setViewMode("all")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                   viewMode === "all"
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -116,8 +116,8 @@ export default function GraficoPizza({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center justify-center h-[320px]">
+        <CardContent className="pt-0 px-2 sm:px-6">
+          <div className="flex items-center justify-center h-[280px] sm:h-[320px]">
             <p className="text-gray-400 text-sm">
               Nenhuma transação encontrada
             </p>
@@ -129,9 +129,9 @@ export default function GraficoPizza({
 
   return (
     <Card className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md border-indigo-500/20 shadow-xl shadow-purple-500/10">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-white text-lg font-semibold">
+      <CardHeader className="pb-3 px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <CardTitle className="text-white text-base sm:text-lg font-semibold">
             {viewMode === "month"
               ? `Distribuição de ${selectedMonth}`
               : "Distribuição Geral"}
@@ -139,7 +139,7 @@ export default function GraficoPizza({
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode("month")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                 viewMode === "month"
                   ? "bg-indigo-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -149,7 +149,7 @@ export default function GraficoPizza({
             </button>
             <button
               onClick={() => setViewMode("all")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                 viewMode === "all"
                   ? "bg-indigo-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -160,8 +160,8 @@ export default function GraficoPizza({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <ResponsiveContainer width="100%" height={320}>
+      <CardContent className="pt-0 px-2 sm:px-6">
+        <ResponsiveContainer width="100%" height={280} className="sm:!h-[320px]">
           <PieChart>
             <Pie
               data={pieChartData}
@@ -169,10 +169,10 @@ export default function GraficoPizza({
               cy="50%"
               labelLine={false}
               label={({ name, percent }) => {
-                if (percent < 0.05) return ""; // Não mostra label se for muito pequeno
+                if (percent < 0.05) return "";
                 return `${name}: ${(percent * 100).toFixed(0)}%`;
               }}
-              outerRadius={110}
+              outerRadius={90}
               fill="#8884d8"
               dataKey="value"
             >
@@ -187,9 +187,9 @@ export default function GraficoPizza({
             </Pie>
             <Tooltip content={<PieTooltip />} />
             <Legend
-              wrapperStyle={{ paddingTop: "20px" }}
+              wrapperStyle={{ paddingTop: "10px" }}
               iconType="square"
-              iconSize={12}
+              iconSize={10}
               formatter={(value) => (
                 <span className="text-gray-300 text-xs">{value}</span>
               )}

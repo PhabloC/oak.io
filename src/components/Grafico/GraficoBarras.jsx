@@ -225,10 +225,10 @@ export default function GraficoBarras({
 
   return (
     <Card className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md border-indigo-500/20 shadow-xl shadow-purple-500/10">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 px-3 sm:px-6">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white text-lg font-semibold">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="text-white text-base sm:text-lg font-semibold">
               {viewMode === "month"
                 ? `Transações de ${selectedMonth}`
                 : "Transações por Mês"}
@@ -236,7 +236,7 @@ export default function GraficoBarras({
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode("month")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                   viewMode === "month"
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -246,7 +246,7 @@ export default function GraficoBarras({
               </button>
               <button
                 onClick={() => setViewMode("all")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                   viewMode === "all"
                     ? "bg-indigo-600 text-white"
                     : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -256,10 +256,10 @@ export default function GraficoBarras({
               </button>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setChartType("bar")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                 chartType === "bar"
                   ? "bg-emerald-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -269,7 +269,7 @@ export default function GraficoBarras({
             </button>
             <button
               onClick={() => setChartType("line")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                 chartType === "line"
                   ? "bg-emerald-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -279,7 +279,7 @@ export default function GraficoBarras({
             </button>
             <button
               onClick={() => setChartType("area")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md transition-all ${
                 chartType === "area"
                   ? "bg-emerald-600 text-white"
                   : "bg-gray-700/50 text-gray-300 hover:bg-gray-700"
@@ -290,8 +290,8 @@ export default function GraficoBarras({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <ResponsiveContainer width="100%" height={320}>
+      <CardContent className="pt-0 px-2 sm:px-6">
+        <ResponsiveContainer width="100%" height={280} className="sm:!h-[320px]">
           {renderChart()}
         </ResponsiveContainer>
       </CardContent>

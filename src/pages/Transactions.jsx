@@ -22,6 +22,7 @@ export default function Transactions() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -362,26 +363,31 @@ export default function Transactions() {
 
   return (
     <div className="text-white flex min-h-screen">
-      {showSidebar && <Sidebar />}
-      <div className="flex-1">
-        <Header />
-        <div className="p-4 sm:ml-4 md:ml-16 lg:ml-28 mt-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold">Transações</h1>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+      {showSidebar && (
+        <Sidebar
+          isMobileOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <div className="p-3 sm:p-4 md:ml-16 lg:ml-28 pb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Transações</h1>
+            <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setShowPopup(true)}
-                className="bg-gray-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300 w-full sm:w-auto"
+                className="bg-gray-800 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-700 transition duration-300 flex-1 sm:flex-none"
               >
                 <BsDatabaseFillAdd className="text-base sm:text-lg" />
-                <span className="text-sm sm:text-base">
-                  Adicionar transação
+                <span className="text-xs sm:text-sm whitespace-nowrap">
+                  Nova transação
                 </span>
               </button>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-gray-800 text-white px-3 py-2 rounded-lg w-full sm:w-auto text-sm sm:text-base"
+                className="bg-gray-800 text-white px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm flex-1 sm:flex-none"
               >
                 {months.map((month) => (
                   <option key={month} value={month}>
@@ -393,44 +399,44 @@ export default function Transactions() {
           </div>
 
           {successMessage && (
-            <div className="bg-green-600 text-white px-3 py-2 rounded-lg mb-4 text-sm sm:text-base">
+            <div className="bg-green-600 text-white px-3 py-2 rounded-lg mb-4 text-xs sm:text-sm">
               {successMessage}
             </div>
           )}
 
           {/* Cards de Saldo, Receita e Despesa */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <Cards saldo={saldo} receita={receita} despesa={despesa} />
           </div>
 
           {/* Filtros e Busca */}
-          <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-4 sm:p-6 rounded-xl shadow-xl shadow-purple-500/10 border border-indigo-500/20 mb-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+          <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-3 sm:p-4 lg:p-6 rounded-xl shadow-xl shadow-purple-500/10 border border-indigo-500/20 mb-4 sm:mb-6">
+            <div className="flex flex-row items-center justify-between gap-2 mb-3 sm:mb-4">
               <div className="flex items-center gap-2 text-indigo-200">
-                <FaFilter className="text-lg" />
-                <h3 className="text-lg font-semibold">Filtros</h3>
+                <FaFilter className="text-sm sm:text-lg" />
+                <h3 className="text-sm sm:text-lg font-semibold">Filtros</h3>
               </div>
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-300 rounded-lg text-sm transition-all duration-200 border border-red-500/30"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-300 rounded-lg text-xs sm:text-sm transition-all duration-200 border border-red-500/30"
                 >
-                  <FaTimes />
-                  Limpar Filtros
+                  <FaTimes className="text-xs" />
+                  <span className="hidden sm:inline">Limpar</span>
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
               {/* Busca */}
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+              <div className="relative col-span-2 sm:col-span-1">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                 <input
                   type="text"
-                  placeholder="Buscar por título ou descrição..."
+                  placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-sm placeholder:text-gray-500"
+                  className="w-full pl-8 sm:pl-10 pr-3 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-xs sm:text-sm placeholder:text-gray-500"
                 />
               </div>
 
@@ -439,9 +445,9 @@ export default function Transactions() {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-sm"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-xs sm:text-sm"
                 >
-                  <option value="Todos">Todos os Tipos</option>
+                  <option value="Todos">Tipo</option>
                   <option value="Ganho">Ganho</option>
                   <option value="Gasto">Gasto</option>
                   <option value="Investimento">Investimento</option>
@@ -453,9 +459,9 @@ export default function Transactions() {
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-sm"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-xs sm:text-sm"
                 >
-                  <option value="Todas">Todas as Categorias</option>
+                  <option value="Todas">Categoria</option>
                   {getAllCategories().map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
@@ -469,9 +475,9 @@ export default function Transactions() {
                 <select
                   value={filterMethod}
                   onChange={(e) => setFilterMethod(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-sm"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-xs sm:text-sm"
                 >
-                  <option value="Todos">Todos os Métodos</option>
+                  <option value="Todos">Método</option>
                   <option value="Pix">Pix</option>
                   <option value="Cartão">Cartão</option>
                   <option value="Boleto">Boleto</option>
@@ -482,10 +488,10 @@ export default function Transactions() {
               <div>
                 <input
                   type="number"
-                  placeholder="Valor mínimo"
+                  placeholder="Mín R$"
                   value={minValue}
                   onChange={(e) => setMinValue(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-sm placeholder:text-gray-500"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-xs sm:text-sm placeholder:text-gray-500"
                   step="0.01"
                   min="0"
                 />
@@ -495,10 +501,10 @@ export default function Transactions() {
               <div>
                 <input
                   type="number"
-                  placeholder="Valor máximo"
+                  placeholder="Máx R$"
                   value={maxValue}
                   onChange={(e) => setMaxValue(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-sm placeholder:text-gray-500"
+                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none text-xs sm:text-sm placeholder:text-gray-500"
                   step="0.01"
                   min="0"
                 />
@@ -506,9 +512,9 @@ export default function Transactions() {
             </div>
 
             {hasActiveFilters && (
-              <div className="mt-4 pt-4 border-t border-gray-700/50">
-                <p className="text-sm text-gray-400">
-                  Mostrando <span className="font-semibold text-white">{filteredTransactions.length}</span> de{" "}
+              <div className="mt-3 pt-3 border-t border-gray-700/50">
+                <p className="text-xs sm:text-sm text-gray-400">
+                  <span className="font-semibold text-white">{filteredTransactions.length}</span> de{" "}
                   <span className="font-semibold text-white">{transactions.length}</span> transações
                 </p>
               </div>

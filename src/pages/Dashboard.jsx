@@ -16,7 +16,6 @@ export default function Dashboard() {
   const location = useLocation();
   const { transactions, setTransactions } = useTransactions();
 
-  // Define o mês atual com a primeira letra maiúscula
   const currentMonth = new Date()
     .toLocaleString("pt-BR", {
       month: "long",
@@ -25,6 +24,7 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [showPopup, setShowPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     saldo: 0,
     receita: 0,
@@ -174,19 +174,24 @@ export default function Dashboard() {
 
   return (
     <div className="text-white flex min-h-screen">
-      {showSidebar && <Sidebar />}
+      {showSidebar && (
+        <Sidebar
+          isMobileOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
+      )}
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <Header />
-        <div className="p-4 ml-28 mt-4 flex flex-col pb-8">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-            <div className="flex items-center gap-4">
+        <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <div className="p-4 md:ml-28 ml-0 flex flex-col pb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => setShowPopup(true)}
-                className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
+                className="bg-gray-800 text-white p-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-700 transition duration-300"
               >
                 <BsDatabaseFillAdd className="text-lg" />
-                <span>Adicionar transação</span>
+                <span className="whitespace-nowrap">Adicionar transação</span>
               </button>
               <select
                 value={selectedMonth}
@@ -208,7 +213,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="flex flex-1">
+          <div className="flex flex-col lg:flex-row flex-1 gap-6">
             <div className="flex flex-col gap-8 flex-1">
               <Cards
                 saldo={dashboardData.saldo}
@@ -226,7 +231,9 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-            <Quadro selectedMonth={selectedMonth} />
+            <div className="w-full lg:w-auto">
+              <Quadro selectedMonth={selectedMonth} />
+            </div>
           </div>
         </div>
       </div>
