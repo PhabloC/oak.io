@@ -12,6 +12,7 @@ import {
   FaCheckDouble,
 } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import { sanitizeText, sanitizeNumber, validateDividaForm } from "../utils/sanitize";
 
 export default function Dividas() {
   const navigate = useNavigate();
@@ -126,14 +127,31 @@ export default function Dividas() {
       return;
     }
 
-    const dividaData = {
-      title: formData.title,
-      total_value: parseCurrencyToNumber(formData.totalValue),
-      paid_value: parseCurrencyToNumber(formData.paidValue) || 0,
-      due_date: formData.dueDate || null,
-      creditor: formData.creditor || null,
+    const cleanTitle = sanitizeText(formData.title, 100);
+    const cleanCreditor = sanitizeText(formData.creditor, 100);
+    const cleanDescription = sanitizeText(formData.description, 500);
+    const totalValue = sanitizeNumber(parseCurrencyToNumber(formData.totalValue), 0.01, 999999999.99);
+    const paidValue = sanitizeNumber(parseCurrencyToNumber(formData.paidValue) || 0, 0, 999999999.99);
+
+    const errors = validateDividaForm({
+      title: cleanTitle,
+      totalValue,
       category: formData.category,
-      description: formData.description || null,
+    });
+
+    if (errors.length > 0) {
+      alert(errors.join("\n"));
+      return;
+    }
+
+    const dividaData = {
+      title: cleanTitle,
+      total_value: totalValue,
+      paid_value: paidValue,
+      due_date: formData.dueDate || null,
+      creditor: cleanCreditor || null,
+      category: formData.category,
+      description: cleanDescription || null,
       user_id: user.id,
     };
 
@@ -169,7 +187,7 @@ export default function Dividas() {
       handleCloseModal();
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("Erro ao salvar dívida:", error);
+      alert("Ocorreu um erro ao salvar a dívida. Tente novamente.");
     }
   };
 
@@ -693,6 +711,7 @@ export default function Dividas() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
+                  maxLength={100}
                   className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
                   placeholder="Ex: Cartão Nubank"
                   required
@@ -709,6 +728,7 @@ export default function Dividas() {
                   onChange={(e) =>
                     setFormData({ ...formData, creditor: e.target.value })
                   }
+                  maxLength={100}
                   className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
                   placeholder="Ex: Banco, Loja, Pessoa"
                 />
@@ -799,6 +819,7 @@ export default function Dividas() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
+                  maxLength={500}
                   className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500 resize-none"
                   placeholder="Observações sobre a dívida..."
                   rows="3"

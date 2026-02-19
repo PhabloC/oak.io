@@ -5,6 +5,7 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { FaPlus, FaTrash, FaEdit, FaCheck, FaTrophy, FaUndo, FaPiggyBank, FaSearch, FaImage } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import { sanitizeText, sanitizeNumber, validateMetaForm } from "../utils/sanitize";
 
 export default function Metas() {
   const navigate = useNavigate();
@@ -98,10 +99,25 @@ export default function Metas() {
       return;
     }
 
+    const cleanTitle = sanitizeText(formData.title, 100);
+    const targetValue = sanitizeNumber(parseCurrencyToNumber(formData.targetValue), 0.01, 999999999.99);
+    const currentValue = sanitizeNumber(parseCurrencyToNumber(formData.currentValue) || 0, 0, 999999999.99);
+
+    const errors = validateMetaForm({
+      title: cleanTitle,
+      targetValue,
+      category: formData.category,
+    });
+
+    if (errors.length > 0) {
+      alert(errors.join("\n"));
+      return;
+    }
+
     const metaData = {
-      title: formData.title,
-      target_value: parseCurrencyToNumber(formData.targetValue),
-      current_value: parseCurrencyToNumber(formData.currentValue) || 0,
+      title: cleanTitle,
+      target_value: targetValue,
+      current_value: currentValue,
       deadline: formData.deadline || null,
       category: formData.category,
       image_url: formData.imageUrl || null,
@@ -140,7 +156,7 @@ export default function Metas() {
       handleCloseModal();
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("Erro ao salvar meta:", error);
+      alert("Ocorreu um erro ao salvar a meta. Tente novamente.");
     }
   };
 
@@ -720,6 +736,7 @@ export default function Metas() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
+                  maxLength={100}
                   className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none placeholder:text-gray-500"
                   placeholder="Ex: Reserva de emergência"
                   required
