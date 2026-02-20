@@ -13,10 +13,12 @@ import {
 } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { sanitizeText, sanitizeNumber, validateDividaForm } from "../utils/sanitize";
+import { useYear } from "../context/YearContext";
 
 export default function Dividas() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { selectedYear, setSelectedYear, years } = useYear();
   const [dividas, setDividas] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingDivida, setEditingDivida] = useState(null);
@@ -68,18 +70,23 @@ export default function Dividas() {
         return;
       }
 
-      await loadDividas(user.id);
+      await loadDividas(user.id, selectedYear);
     };
 
     checkAndLoad();
-  }, [navigate]);
+  }, [navigate, selectedYear]);
 
-  const loadDividas = async (userId) => {
+  const loadDividas = async (userId, year) => {
     try {
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
+
       const { data, error } = await supabase
         .from("dividas")
         .select("*")
         .eq("user_id", userId)
+        .or(`due_date.gte.${startDate},due_date.is.null`)
+        .or(`due_date.lte.${endDate},due_date.is.null`)
         .order("due_date", { ascending: true });
 
       if (error) {
@@ -87,7 +94,13 @@ export default function Dividas() {
         return;
       }
 
-      setDividas(data || []);
+      const filteredData = (data || []).filter((d) => {
+        if (!d.due_date) return true;
+        const dueYear = new Date(d.due_date).getFullYear();
+        return dueYear === year;
+      });
+
+      setDividas(filteredData);
     } catch (error) {
       console.error("Erro ao carregar dívidas:", error);
     }
@@ -441,13 +454,26 @@ export default function Dividas() {
         <div className="p-4 md:ml-28 ml-0 flex flex-col pb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <h1 className="text-2xl sm:text-3xl font-bold">Controle de Dívidas</h1>
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
-            >
-              <FaPlus className="text-lg" />
-              <span>Nova Dívida</span>
-            </button>
+            <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setShowModal(true)}
+                className="bg-gray-800 text-white p-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition duration-300"
+              >
+                <FaPlus className="text-lg" />
+                <span>Nova Dívida</span>
+              </button>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-gray-800 text-white p-2 rounded-lg"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {successMessage && (
@@ -687,7 +713,7 @@ export default function Dividas() {
       {/* Modal de Criar/Editar */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn overflow-y-auto py-4">
-          <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-lg border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
+          <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-lg lg:max-w-2xl border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 {editingDivida ? "Editar Dívida" : "Nova Dívida"}
@@ -700,7 +726,7 @@ export default function Dividas() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium mb-2 text-indigo-200">
                   Título
@@ -755,6 +781,20 @@ export default function Dividas() {
 
               <div>
                 <label className="block text-sm font-medium mb-2 text-indigo-200">
+                  Data de Vencimento (opcional)
+                </label>
+                <input
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dueDate: e.target.value })
+                  }
+                  className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-indigo-200">
                   Valor Total da Dívida
                 </label>
                 <div className="flex items-center">
@@ -796,21 +836,7 @@ export default function Dividas() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-indigo-200">
-                  Data de Vencimento (opcional)
-                </label>
-                <input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dueDate: e.target.value })
-                  }
-                  className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
-                />
-              </div>
-
-              <div>
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-indigo-200">
                   Descrição (opcional)
                 </label>
@@ -826,7 +852,7 @@ export default function Dividas() {
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6">
+              <div className="lg:col-span-2 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-2">
                 <button
                   type="button"
                   onClick={handleCloseModal}

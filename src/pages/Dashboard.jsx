@@ -8,6 +8,7 @@ import Quadro from "../components/Quadro/Quadro";
 import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import { useTransactions } from "../context/TransactionsContext";
+import { useYear } from "../context/YearContext";
 import GraficoBarras from "../components/Grafico/GraficoBarras";
 import GraficoPizza from "../components/Grafico/GraficoPizza";
 
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { transactions, setTransactions } = useTransactions();
+  const { selectedYear, setSelectedYear, years } = useYear();
 
   const currentMonth = new Date()
     .toLocaleString("pt-BR", {
@@ -62,8 +64,8 @@ export default function Dashboard() {
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
-  // Função para carregar transações do Firestore
-  const loadTransactions = async (month) => {
+  // Função para carregar transações do Supabase
+  const loadTransactions = async (month, year) => {
     try {
       const {
         data: { user },
@@ -74,11 +76,16 @@ export default function Dashboard() {
         return;
       }
 
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
+
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
         .eq("user_id", user.id)
         .eq("month", month)
+        .gte("date", startDate)
+        .lte("date", endDate)
         .order("date", { ascending: true });
 
       if (error) {
@@ -108,11 +115,11 @@ export default function Dashboard() {
     return { saldo, receita, despesa };
   };
 
-  // Atualiza os dados do Dashboard sempre que as transações ou o mês mudarem
+  // Atualiza os dados do Dashboard sempre que as transações, mês ou ano mudarem
   useEffect(() => {
-    loadTransactions(selectedMonth);
+    loadTransactions(selectedMonth, selectedYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     const data = calculateDashboardData(transactions, selectedMonth);
@@ -132,7 +139,6 @@ export default function Dashboard() {
 
       const newTransaction = {
         ...transaction,
-        month: selectedMonth,
         user_id: user.id,
       };
 
@@ -204,6 +210,17 @@ export default function Dashboard() {
                   </option>
                 ))}
               </select>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-gray-800 text-white p-2 rounded-lg"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -223,10 +240,12 @@ export default function Dashboard() {
               <div className="flex flex-col gap-6">
                 <GraficoBarras
                   selectedMonth={selectedMonth}
+                  selectedYear={selectedYear}
                   transactions={transactions}
                 />
                 <GraficoPizza
                   selectedMonth={selectedMonth}
+                  selectedYear={selectedYear}
                   transactions={transactions}
                 />
               </div>

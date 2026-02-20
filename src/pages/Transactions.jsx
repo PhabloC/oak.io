@@ -9,6 +9,7 @@ import ModalTransacao from "../components/Modal/ModalTransacao";
 import ModalEditor from "../components/Modal/ModalEditor";
 import ModalDeleted from "../components/Modal/ModalDeleted";
 import { useTransactions } from "../context/TransactionsContext";
+import { useYear } from "../context/YearContext";
 import TransactionsTable from "../components/Table/TransactionsTable";
 import { getAllCategories } from "../utils/categories";
 import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
@@ -17,6 +18,7 @@ export default function Transactions() {
   const navigate = useNavigate();
   const location = useLocation();
   const { transactions, setTransactions } = useTransactions();
+  const { selectedYear, setSelectedYear, years } = useYear();
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -31,10 +33,11 @@ export default function Transactions() {
   const [filterType, setFilterType] = useState("Todos");
   const [filterCategory, setFilterCategory] = useState("Todas");
   const [filterMethod, setFilterMethod] = useState("Todos");
+  const [filterStatus, setFilterStatus] = useState("Todos");
   const [minValue, setMinValue] = useState("");
   const [maxValue, setMaxValue] = useState("");
 
-  // Define o mês atual com a primeira letra maiúscula
+  // Define o mês atual
   const currentMonth = new Date()
     .toLocaleString("pt-BR", { month: "long" })
     .replace(/^\w/, (c) => c.toUpperCase());
@@ -66,12 +69,12 @@ export default function Transactions() {
         return;
       }
 
-      await loadTransactions(selectedMonth, user.id);
+      await loadTransactions(selectedMonth, selectedYear);
     };
 
     checkAndLoad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, selectedMonth]);
+  }, [navigate, selectedMonth, selectedYear]);
 
   // Ajuste os itens por página com base no tamanho da tela
 
@@ -94,7 +97,7 @@ export default function Transactions() {
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
-  const loadTransactions = async (month) => {
+  const loadTransactions = async (month, year) => {
     try {
       const {
         data: { user },
@@ -105,11 +108,16 @@ export default function Transactions() {
         return;
       }
 
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
+
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
         .eq("user_id", user.id)
         .eq("month", month)
+        .gte("date", startDate)
+        .lte("date", endDate)
         .order("date", { ascending: true });
 
       if (error) {
@@ -169,7 +177,6 @@ export default function Transactions() {
 
       const newTransaction = {
         ...transaction,
-        month: selectedMonth,
         user_id: user.id,
       };
 
@@ -328,6 +335,12 @@ export default function Transactions() {
       return false;
     }
 
+    // Status filter (paga/em aberto)
+    if (filterStatus !== "Todos") {
+      if (filterStatus === "Paga" && !transaction.paga) return false;
+      if (filterStatus === "Em aberto" && transaction.paga) return false;
+    }
+
     // Value range filters
     if (minValue && transaction.value < parseFloat(minValue)) {
       return false;
@@ -351,13 +364,14 @@ export default function Transactions() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterType, filterCategory, filterMethod, minValue, maxValue]);
+  }, [searchTerm, filterType, filterCategory, filterMethod, filterStatus, minValue, maxValue]);
 
   const clearFilters = () => {
     setSearchTerm("");
     setFilterType("Todos");
     setFilterCategory("Todas");
     setFilterMethod("Todos");
+    setFilterStatus("Todos");
     setMinValue("");
     setMaxValue("");
   };
@@ -367,6 +381,7 @@ export default function Transactions() {
     filterType !== "Todos" ||
     filterCategory !== "Todas" ||
     filterMethod !== "Todos" ||
+    filterStatus !== "Todos" ||
     minValue ||
     maxValue;
 
@@ -426,6 +441,17 @@ export default function Transactions() {
                 {months.map((month) => (
                   <option key={month} value={month}>
                     {month}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="bg-gray-800 text-white px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm flex-1 sm:flex-none"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
                   </option>
                 ))}
               </select>
@@ -515,6 +541,19 @@ export default function Transactions() {
                   <option value="Pix">Pix</option>
                   <option value="Cartão">Cartão</option>
                   <option value="Boleto">Boleto</option>
+                </select>
+              </div>
+
+              {/* Filtro por Status */}
+              <div>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer text-xs sm:text-sm"
+                >
+                  <option value="Todos">Status</option>
+                  <option value="Paga">Paga</option>
+                  <option value="Em aberto">Em aberto</option>
                 </select>
               </div>
 

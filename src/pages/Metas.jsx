@@ -722,7 +722,7 @@ export default function Metas() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn overflow-y-auto py-4">
-          <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-lg border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
+          <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-lg lg:max-w-2xl border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 {editingMeta ? "Editar Meta" : "Nova Meta"}
@@ -735,7 +735,7 @@ export default function Metas() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium mb-2 text-indigo-200">
                   Título
@@ -811,7 +811,7 @@ export default function Metas() {
                 </div>
               </div>
 
-              <div>
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-indigo-200">
                   Prazo (opcional)
                 </label>
@@ -825,7 +825,7 @@ export default function Metas() {
                 />
               </div>
 
-              <div>
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-indigo-200">
                   Imagem de Fundo (opcional)
                 </label>
@@ -930,7 +930,7 @@ export default function Metas() {
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6">
+              <div className="lg:col-span-2 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-2">
                 <button
                   type="button"
                   onClick={handleCloseModal}

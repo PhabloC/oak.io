@@ -44,9 +44,11 @@ const formatCurrency = (value) =>
 
 export default function GraficoPizza({
   selectedMonth,
+  selectedYear,
   transactions = [],
 }) {
   const [viewMode, setViewMode] = useState("month"); // "month" ou "all"
+  const year = selectedYear || new Date().getFullYear();
 
   const chartData = useMemo(() => {
     const filterByMonth = (t) => t.month === selectedMonth;
@@ -144,8 +146,8 @@ export default function GraficoPizza({
             </CardTitle>
             <CardDescription className="text-gray-400">
               {viewMode === "month"
-                ? `${selectedMonth} - ${new Date().getFullYear()}`
-                : `Total geral - ${new Date().getFullYear()}`}
+                ? `${selectedMonth} - ${year}`
+                : `Total geral - ${year}`}
             </CardDescription>
           </div>
           <div className="flex gap-2">
