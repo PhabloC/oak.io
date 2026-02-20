@@ -1,5 +1,5 @@
 import { BsBoxArrowUpRight } from "react-icons/bs";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaCheck } from "react-icons/fa";
 
 const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -7,7 +7,7 @@ const formatDate = (dateString) => {
   return `${day}/${month}/${year}`;
 };
 
-export default function TransactionsTable({ transactions, onEdit, onDelete }) {
+export default function TransactionsTable({ transactions, onEdit, onDelete, onTogglePaga }) {
   const getTypeBadgeClass = (type) => {
     switch (type) {
       case "Ganho":
@@ -101,9 +101,30 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
                   {transaction.category}
                 </span>
               )}
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold border ${
+                  transaction.paga
+                    ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-300 border-emerald-500/30"
+                    : "bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-300 border-orange-500/30"
+                }`}
+              >
+                {transaction.paga && <FaCheck className="text-[10px]" />}
+                {transaction.paga ? "Paga" : "Em aberto"}
+              </span>
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-700/30">
+              <button
+                onClick={() => onTogglePaga(transaction)}
+                className={`p-2 rounded-lg border transition-all duration-200 ${
+                  transaction.paga
+                    ? "bg-emerald-600/20 hover:bg-emerald-600/40 border-emerald-500/30 text-emerald-400"
+                    : "bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 text-orange-400"
+                }`}
+                title={transaction.paga ? "Marcar como em aberto" : "Marcar como paga"}
+              >
+                <FaCheck className="text-sm" />
+              </button>
               <button
                 onClick={() => onEdit(transaction)}
                 className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400 transition-all duration-200"
@@ -142,6 +163,9 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
               </th>
               <th className="px-4 lg:px-6 py-4 text-left text-xs lg:text-sm font-semibold text-indigo-200 uppercase tracking-wider">
                 Data
+              </th>
+              <th className="px-4 lg:px-6 py-4 text-center text-xs lg:text-sm font-semibold text-indigo-200 uppercase tracking-wider">
+                Status
               </th>
               <th className="px-4 lg:px-6 py-4 text-right text-xs lg:text-sm font-semibold text-indigo-200 uppercase tracking-wider">
                 Valor
@@ -193,6 +217,18 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm lg:text-base text-gray-300">
                   {formatDate(transaction.date)}
                 </td>
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-center">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 lg:px-3 py-1 rounded-lg text-xs lg:text-sm font-semibold border ${
+                      transaction.paga
+                        ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-300 border-emerald-500/30"
+                        : "bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-300 border-orange-500/30"
+                    }`}
+                  >
+                    {transaction.paga && <FaCheck className="text-xs" />}
+                    {transaction.paga ? "Paga" : "Em aberto"}
+                  </span>
+                </td>
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right">
                   <span
                     className={`text-sm lg:text-base font-bold ${
@@ -210,6 +246,17 @@ export default function TransactionsTable({ transactions, onEdit, onDelete }) {
                 </td>
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-center">
                   <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => onTogglePaga(transaction)}
+                      className={`p-2 rounded-lg border transition-all duration-200 hover:scale-110 ${
+                        transaction.paga
+                          ? "bg-emerald-600/20 hover:bg-emerald-600/40 border-emerald-500/30 hover:border-emerald-400/50 text-emerald-400 hover:text-emerald-300"
+                          : "bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400/50 text-orange-400 hover:text-orange-300"
+                      }`}
+                      title={transaction.paga ? "Marcar como em aberto" : "Marcar como paga"}
+                    >
+                      <FaCheck className="text-sm lg:text-base" />
+                    </button>
                     <button
                       onClick={() => onEdit(transaction)}
                       className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300 transition-all duration-200 hover:scale-110"
