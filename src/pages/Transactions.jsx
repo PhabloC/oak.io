@@ -266,6 +266,40 @@ export default function Transactions() {
     setShowConfirmModal(false);
   };
 
+  const handleTogglePaga = async (transaction) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const newPaga = !transaction.paga;
+
+      const { error } = await supabase
+        .from("transactions")
+        .update({ paga: newPaga })
+        .eq("id", transaction.id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Erro ao atualizar status:", error);
+        return;
+      }
+
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === transaction.id ? { ...t, paga: newPaga } : t
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+    }
+  };
+
   // Filter logic
   const filteredTransactions = transactions.filter((transaction) => {
     // Search term filter
@@ -525,6 +559,7 @@ export default function Transactions() {
             transactions={currentTransactions}
             onEdit={handleOpenEditor}
             onDelete={handleOpenConfirmModal}
+            onTogglePaga={handleTogglePaga}
           />
 
           {/* Controle de páginação */}
