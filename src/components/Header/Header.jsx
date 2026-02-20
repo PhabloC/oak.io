@@ -70,7 +70,7 @@ export default function Header({ onMenuClick }) {
 
       {/* Info do usuário */}
       {user ? (
-        <div className="flex items-center space-x-2 sm:space-x-4 px-2 sm:px-4 py-2 rounded-xl bg-indigo-800/30 border border-indigo-700/30">
+        <div className="flex items-center space-x-2 sm:space-x-4 px-2 sm:px-4 py-1 rounded-xl bg-indigo-800/30 border border-indigo-700/30">
           <img
             src={userPhoto}
             alt="Foto de Perfil"

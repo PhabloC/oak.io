@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { TransactionsProvider } from "./context/TransactionsContext";
+import { YearProvider } from "./context/YearContext";
 import Transactions from "./pages/Transactions";
 import Metas from "./pages/Metas";
 import Dividas from "./pages/Dividas";
@@ -12,8 +13,9 @@ import Investimento from "./pages/Investimento";
 export default function App() {
   return (
     <ErrorBoundary>
-      <TransactionsProvider>
-        <Router>
+      <YearProvider>
+        <TransactionsProvider>
+          <Router>
           <div className="flex min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-950">
             <div className="flex-1">
               <Routes>
@@ -61,8 +63,9 @@ export default function App() {
               </Routes>
             </div>
           </div>
-        </Router>
-      </TransactionsProvider>
+          </Router>
+        </TransactionsProvider>
+      </YearProvider>
     </ErrorBoundary>
   );
 }
