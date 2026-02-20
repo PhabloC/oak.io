@@ -1,13 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoHeader from "../../assets/Header/logo2.png";
-import { TbTransitionRightFilled } from "react-icons/tb";
 import { MdDashboard } from "react-icons/md";
-import { GiTargetArrows } from "react-icons/gi";
-import { FaFileInvoiceDollar, FaTimes, FaChartLine } from "react-icons/fa";
+import { FaFileInvoiceDollar, FaTimes } from "react-icons/fa";
 import { IoExit } from "react-icons/io5";
 import Tree from "../../assets/tree.png";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabaseClient";
+import { MdInsertChart } from "react-icons/md";
+import { TfiTarget } from "react-icons/tfi";
+import { AiFillDollarCircle } from "react-icons/ai";
 
 export default function Sidebar({ isMobileOpen, onClose }) {
   const location = useLocation();
@@ -138,7 +139,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
                 : "hover:bg-indigo-800/50 hover:scale-[1.01]"
             } group relative overflow-hidden ${isMobile ? "sidebar-content-item" : ""}`}
           >
-            <TbTransitionRightFilled
+            <AiFillDollarCircle
               className={`text-2xl transition-all duration-200 ${
                 location.pathname === "/transacoes"
                   ? "text-white"
@@ -168,7 +169,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
                 : "hover:bg-indigo-800/50 hover:scale-[1.01]"
             } group relative overflow-hidden ${isMobile ? "sidebar-content-item" : ""}`}
           >
-            <GiTargetArrows
+            <TfiTarget
               className={`text-2xl transition-all duration-200 ${
                 location.pathname === "/metas"
                   ? "text-white"
@@ -228,7 +229,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
                 : "hover:bg-indigo-800/50 hover:scale-[1.01]"
             } group relative overflow-hidden ${isMobile ? "sidebar-content-item" : ""}`}
           >
-            <FaChartLine
+            <MdInsertChart
               className={`text-2xl transition-all duration-200 ${
                 location.pathname === "/investimento"
                   ? "text-white"
@@ -251,7 +252,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
         </nav>
 
         {/* Botão de Sair */}
-        <div 
+        <div
           className={`mt-auto w-full px-3 pt-4 border-t border-indigo-800/50 ${isMobile ? "sidebar-content-item" : ""}`}
         >
           <button
