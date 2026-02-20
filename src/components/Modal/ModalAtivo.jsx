@@ -5,7 +5,9 @@ const TIPOS_ATIVO = [
   { value: "acoes", label: "Ações" },
   { value: "fiis", label: "FIIs" },
   { value: "tesouro_selic", label: "Tesouro Selic" },
-  { value: "exterior_cripto", label: "Exterior/Cripto" },
+  { value: "acoes_exterior", label: "Ações Exterior" },
+  { value: "etf_exterior", label: "ETF Exterior" },
+  { value: "cripto", label: "Criptomoedas" },
 ];
 
 export default function ModalAtivo({ onClose, onSave }) {
@@ -38,10 +40,6 @@ export default function ModalAtivo({ onClose, onSave }) {
 
     if (!nome.trim()) {
       alert("Informe o nome do ativo.");
-      return;
-    }
-    if (tipo !== "tesouro_selic" && vMercado <= 0) {
-      alert("Valor de mercado deve ser maior que zero.");
       return;
     }
     if (tipo === "tesouro_selic" && !taxaSelicAnual.trim()) {
@@ -149,10 +147,10 @@ export default function ModalAtivo({ onClose, onSave }) {
           {tipo !== "tesouro_selic" && (
             <div>
               <label className="block text-sm font-medium mb-2 text-indigo-200">
-                Valor de mercado no momento (R$)
+                Valor de mercado no momento (R$) - Opcional
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Quanto o ativo está valendo hoje no mercado
+                Quanto o ativo está valendo hoje no mercado (pode informar depois)
               </p>
               <div className="flex items-center">
                 <span className="bg-gray-700 text-white p-3 rounded-l-xl border border-gray-600/50 font-semibold">
@@ -167,7 +165,6 @@ export default function ModalAtivo({ onClose, onSave }) {
                   }
                   className="w-full p-3 rounded-r-xl bg-gray-700/50 text-white border border-gray-600/50 border-l-0 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none"
                   placeholder="0,00"
-                  required
                 />
               </div>
             </div>

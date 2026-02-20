@@ -19,14 +19,18 @@ const TIPO_LABELS = {
   acoes: "Ações",
   fiis: "FIIs",
   tesouro_selic: "Tesouro Selic",
-  exterior_cripto: "Exterior/Cripto",
+  acoes_exterior: "Ações Exterior",
+  etf_exterior: "ETF Exterior",
+  cripto: "Criptomoedas",
 };
 
 const TIPO_COLORS = {
   acoes: "#3b82f6",
   fiis: "#22c55e",
   tesouro_selic: "#eab308",
-  exterior_cripto: "#a855f7",
+  acoes_exterior: "#a855f7",
+  etf_exterior: "#ec4899",
+  cripto: "#f97316",
 };
 
 const formatCurrency = (value) =>

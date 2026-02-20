@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
+import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
 
 const formatCurrency = (v) =>
   new Intl.NumberFormat("pt-BR", {
@@ -21,7 +22,7 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
     }
   }, [ativoPreSelecionado, ativos]);
   const [valorInvestimento, setValorInvestimento] = useState("");
-  const [novoValorMercado, setNovoValorMercado] = useState("");
+  const [valorCarteira, setValorCarteira] = useState("");
 
   const formatInputCurrency = (value) => {
     if (!value) return "";
@@ -42,21 +43,32 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
   const handleSubmit = (e) => {
     e.preventDefault();
     const valor = parseNum(valorInvestimento);
-    const novo = parseNum(novoValorMercado);
+    const carteira = parseNum(valorCarteira);
     if (!ativoSelecionado || valor <= 0) {
       alert("Selecione um ativo e informe o valor do investimento.");
       return;
     }
-    const novoValorAtual =
-      novo > 0 ? novo : Number(ativoSelecionado.valor_atual || 0) + valor;
-    onSave(ativoSelecionado, valor, novoValorAtual);
+    if (carteira <= 0) {
+      alert("Informe o valor total da sua carteira.");
+      return;
+    }
+    onSave(ativoSelecionado, valor, carteira);
     onClose();
   };
 
-  const valorInvestido = Number(ativoSelecionado?.valor_investido || 0);
-  const valorAtual = Number(ativoSelecionado?.valor_atual || 0);
+  const valorInvestidoAnterior = Number(ativoSelecionado?.valor_investido || 0);
   const aporteNum = parseNum(valorInvestimento);
-  const sugestaoValorMercado = valorAtual + aporteNum;
+  const carteiraNum = parseNum(valorCarteira);
+  
+  const novoTotalInvestido = valorInvestidoAnterior + aporteNum;
+  const diferencaValor = carteiraNum - novoTotalInvestido;
+  const percentualVariacao = novoTotalInvestido > 0 
+    ? ((carteiraNum - novoTotalInvestido) / novoTotalInvestido) * 100 
+    : 0;
+  
+  const estaValorizado = diferencaValor > 0;
+  const estaDesvalorizado = diferencaValor < 0;
+  const temDados = aporteNum > 0 && carteiraNum > 0;
 
   if (ativos.length === 0) {
     return (
@@ -110,14 +122,10 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
 
           {ativoSelecionado && (
             <div className="bg-gray-700/30 p-4 rounded-lg">
-              <p className="text-gray-400 text-sm mb-2">Patrimônio do ativo</p>
+              <p className="text-gray-400 text-sm mb-2">Patrimônio atual do ativo</p>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Total investido:</span>
-                <span className="text-white">{formatCurrency(valorInvestido)}</span>
-              </div>
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-gray-400">Valor de mercado:</span>
-                <span className="text-emerald-400">{formatCurrency(valorAtual)}</span>
+                <span className="text-gray-400">Total já investido:</span>
+                <span className="text-white">{formatCurrency(valorInvestidoAnterior)}</span>
               </div>
             </div>
           )}
@@ -126,6 +134,9 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
             <label className="block text-sm font-medium mb-2 text-indigo-200">
               Valor do investimento (R$)
             </label>
+            <p className="text-xs text-gray-500 mb-1">
+              Quanto você está investindo agora
+            </p>
             <div className="flex items-center">
               <span className="bg-gray-700 text-white p-3 rounded-l-xl border border-gray-600/50 font-semibold">R$</span>
               <input
@@ -144,32 +155,86 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
 
           <div>
             <label className="block text-sm font-medium mb-2 text-indigo-200">
-              Valor de mercado após o investimento (R$)
+              Valor total na carteira (R$)
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Opcional. Se deixar em branco: valor atual + investimento
+              Quanto você tem atualmente neste ativo na sua carteira/corretora
             </p>
             <div className="flex items-center">
               <span className="bg-gray-700 text-white p-3 rounded-l-xl border border-gray-600/50 font-semibold">R$</span>
               <input
                 type="text"
                 inputMode="numeric"
-                value={novoValorMercado}
+                value={valorCarteira}
                 onChange={(e) =>
-                  setNovoValorMercado(formatInputCurrency(e.target.value))
+                  setValorCarteira(formatInputCurrency(e.target.value))
                 }
                 className="w-full p-3 rounded-r-xl bg-gray-700/50 text-white border border-gray-600/50 border-l-0 focus:border-purple-500 outline-none"
-                placeholder={
-                  aporteNum > 0
-                    ? sugestaoValorMercado.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    : "0,00"
-                }
+                placeholder="0,00"
+                required
               />
             </div>
           </div>
+
+          {temDados && (
+            <div className={`p-4 rounded-xl border ${
+              estaValorizado 
+                ? "bg-emerald-900/30 border-emerald-600/50" 
+                : estaDesvalorizado 
+                  ? "bg-red-900/30 border-red-600/50"
+                  : "bg-gray-700/30 border-gray-600/50"
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                {estaValorizado ? (
+                  <FaArrowTrendUp className="text-emerald-400 text-lg" />
+                ) : estaDesvalorizado ? (
+                  <FaArrowTrendDown className="text-red-400 text-lg" />
+                ) : null}
+                <p className={`font-semibold ${
+                  estaValorizado 
+                    ? "text-emerald-400" 
+                    : estaDesvalorizado 
+                      ? "text-red-400"
+                      : "text-gray-300"
+                }`}>
+                  {estaValorizado 
+                    ? "Valorizado!" 
+                    : estaDesvalorizado 
+                      ? "Desvalorizado" 
+                      : "Neutro"}
+                </p>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Total investido (anterior + novo):</span>
+                  <span className="text-white">{formatCurrency(novoTotalInvestido)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Valor na carteira:</span>
+                  <span className="text-white">{formatCurrency(carteiraNum)}</span>
+                </div>
+                <hr className="border-gray-600/50 my-2" />
+                <div className="flex justify-between font-medium">
+                  <span className="text-gray-300">
+                    {estaValorizado ? "Lucro:" : estaDesvalorizado ? "Prejuízo:" : "Diferença:"}
+                  </span>
+                  <span className={
+                    estaValorizado 
+                      ? "text-emerald-400" 
+                      : estaDesvalorizado 
+                        ? "text-red-400"
+                        : "text-gray-300"
+                  }>
+                    {estaDesvalorizado ? "-" : "+"}{formatCurrency(Math.abs(diferencaValor))}
+                    <span className="text-xs ml-1">
+                      ({percentualVariacao >= 0 ? "+" : ""}{percentualVariacao.toFixed(2)}%)
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3 justify-end mt-6">
             <button

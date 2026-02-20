@@ -4,7 +4,6 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import {
-  FaChartLine,
   FaPlus,
   FaEdit,
   FaTrash,
@@ -12,15 +11,15 @@ import {
   FaHistory,
   FaFilter,
   FaPiggyBank,
-  FaChartBar,
+  FaCog,
 } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import ModalAtivo from "../components/Modal/ModalAtivo";
 import ModalInvestimento from "../components/Modal/ModalInvestimento";
 import ModalEditarValorMercado from "../components/Modal/ModalEditarValorMercado";
+import ModalEditarAtivo from "../components/Modal/ModalEditarAtivo";
 import ModalExcluirAtivo from "../components/Modal/ModalExcluirAtivo";
 import ModalRemoverInvestimentos from "../components/Modal/ModalRemoverInvestimentos";
-import ModalEditarVariacao from "../components/Modal/ModalEditarVariacao";
 import GraficoTipoAtivo from "../components/Investimento/GraficoTipoAtivo";
 import GraficoEvolucaoMensal from "../components/Investimento/GraficoEvolucaoMensal";
 import SimuladorJurosCompostos from "../components/Investimento/SimuladorJurosCompostos";
@@ -29,14 +28,18 @@ const TIPOS_LABEL = {
   acoes: "Ações",
   fiis: "FIIs",
   tesouro_selic: "Tesouro Selic",
-  exterior_cripto: "Exterior/Cripto",
+  acoes_exterior: "Ações Exterior",
+  etf_exterior: "ETF Exterior",
+  cripto: "Criptomoedas",
 };
 
 const ALOCACAO_IDEAL = {
-  acoes: 0.25,
-  fiis: 0.25,
-  tesouro_selic: 0.25,
-  exterior_cripto: 0.25,
+  acoes: 0.17,
+  fiis: 0.17,
+  tesouro_selic: 0.17,
+  acoes_exterior: 0.16,
+  etf_exterior: 0.16,
+  cripto: 0.17,
 };
 
 const MESES = [
@@ -74,12 +77,12 @@ export default function Investimento() {
   const [ativoPreSelecionadoInvestimento, setAtivoPreSelecionadoInvestimento] = useState(null);
   const [showModalEditarValor, setShowModalEditarValor] = useState(false);
   const [ativoParaEditarValor, setAtivoParaEditarValor] = useState(null);
+  const [showModalEditarAtivo, setShowModalEditarAtivo] = useState(false);
+  const [ativoParaEditar, setAtivoParaEditar] = useState(null);
   const [showModalExcluir, setShowModalExcluir] = useState(false);
   const [ativoParaExcluir, setAtivoParaExcluir] = useState(null);
   const [showModalRemoverInvestimentos, setShowModalRemoverInvestimentos] = useState(false);
   const [ativoParaRemoverInvestimentos, setAtivoParaRemoverInvestimentos] = useState(null);
-  const [showModalVariacao, setShowModalVariacao] = useState(false);
-  const [ativoParaVariacao, setAtivoParaVariacao] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
@@ -137,9 +140,7 @@ export default function Investimento() {
   }, []);
 
   const valorMercadoEfetivo = (a) => {
-    const vInv = Number(a.valor_investido || 0);
-    const variacao = a.variacao_percentual != null ? Number(a.variacao_percentual) : null;
-    return variacao != null ? vInv * (1 + variacao / 100) : Number(a.valor_atual || 0);
+    return Number(a.valor_atual || 0);
   };
 
   const patrimonioTotal = useMemo(() => {
@@ -242,41 +243,6 @@ export default function Investimento() {
     setShowModalEditarValor(true);
   };
 
-  const handleEditarVariacao = (ativo) => {
-    setAtivoParaVariacao(ativo);
-    setShowModalVariacao(true);
-  };
-
-  const handleSaveVariacao = async (variacaoPercentual) => {
-    if (!ativoParaVariacao) return;
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    try {
-      const { error } = await supabase
-        .from("ativos")
-        .update({ variacao_percentual: variacaoPercentual })
-        .eq("id", ativoParaVariacao.id)
-        .eq("user_id", user.id);
-      if (error) throw error;
-      setAtivos((prev) =>
-        prev.map((a) =>
-          a.id === ativoParaVariacao.id
-            ? { ...a, variacao_percentual: variacaoPercentual }
-            : a
-        )
-      );
-      setShowModalVariacao(false);
-      setAtivoParaVariacao(null);
-      setSuccessMessage("Variação atualizada!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao atualizar variação.");
-    }
-  };
-
   const handleSaveValorMercado = async (novoValor) => {
     if (!ativoParaEditarValor) return;
     const {
@@ -302,6 +268,45 @@ export default function Investimento() {
     } catch (e) {
       console.error(e);
       alert("Erro ao atualizar valor.");
+    }
+  };
+
+  const handleEditarAtivo = (ativo) => {
+    setAtivoParaEditar(ativo);
+    setShowModalEditarAtivo(true);
+  };
+
+  const handleSaveEditarAtivo = async (dados) => {
+    if (!ativoParaEditar) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("ativos")
+        .update({
+          nome: dados.nome,
+          ticker: dados.ticker,
+          tipo: dados.tipo,
+        })
+        .eq("id", ativoParaEditar.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setAtivos((prev) =>
+        prev.map((a) =>
+          a.id === ativoParaEditar.id
+            ? { ...a, nome: dados.nome, ticker: dados.ticker, tipo: dados.tipo }
+            : a
+        )
+      );
+      setShowModalEditarAtivo(false);
+      setAtivoParaEditar(null);
+      setSuccessMessage("Ativo atualizado!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao atualizar ativo.");
     }
   };
 
@@ -569,11 +574,11 @@ export default function Investimento() {
                           <FaPiggyBank className="text-sm" />
                         </button>
                         <button
-                          onClick={() => handleEditarVariacao(ativo)}
+                          onClick={() => handleEditarAtivo(ativo)}
                           className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
-                          title="Informar variação"
+                          title="Editar ativo"
                         >
-                          <FaChartBar className="text-sm" />
+                          <FaCog className="text-sm" />
                         </button>
                         <button
                           onClick={() => handleEditarValorMercado(ativo)}
@@ -593,34 +598,17 @@ export default function Investimento() {
                     </div>
                     <div className="mt-3 space-y-1">
                       <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Tipo</span>
+                        <span className="text-gray-300">
+                          {TIPOS_LABEL[ativo.tipo] || ativo.tipo}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Valor de mercado</span>
                         <span className="text-white font-medium">
                           {formatCurrency(ativo.valor_atual)}
                         </span>
                       </div>
-                      {ativo.variacao_percentual != null && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Variação</span>
-                          <span
-                            className={
-                              Number(ativo.variacao_percentual) >= 0
-                                ? "text-emerald-400"
-                                : "text-red-400"
-                            }
-                          >
-                            {Number(ativo.variacao_percentual) >= 0 ? "+" : ""}
-                            {Number(ativo.variacao_percentual).toFixed(1)}%
-                          </span>
-                        </div>
-                      )}
-                      {ativo.variacao_percentual == null && (
-                        <button
-                          onClick={() => handleEditarVariacao(ativo)}
-                          className="text-xs text-amber-400 hover:text-amber-300 mt-1"
-                        >
-                          + Informar valorização/desvalorização
-                        </button>
-                      )}
                     </div>
                     <button
                       onClick={() => handleOpenInvestimento(ativo)}
@@ -649,7 +637,7 @@ export default function Investimento() {
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <FaBalanceScale className="text-indigo-400" />
-              <h2 className="text-xl font-bold">Alocação ideal (25% cada)</h2>
+              <h2 className="text-xl font-bold">Alocação ideal (~17% cada)</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {Object.entries(ALOCACAO_IDEAL).map(([tipo, alvo]) => {
@@ -665,7 +653,7 @@ export default function Investimento() {
                       <span className="text-white font-semibold">
                         {atual.toFixed(1)}%
                       </span>
-                      <span className="text-gray-500 text-xs">meta 25%</span>
+                      <span className="text-gray-500 text-xs">meta {(alvo * 100).toFixed(0)}%</span>
                     </div>
                     <div className="h-2 bg-gray-700 rounded-full mt-2 overflow-hidden">
                       <div
@@ -808,20 +796,11 @@ export default function Investimento() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {ativosComInvestimento.map((ativo) => {
                   const valorInvestido = Number(ativo.valor_investido || 0);
-                  const variacao = ativo.variacao_percentual != null
-                    ? Number(ativo.variacao_percentual)
-                    : null;
-
-                  const lucro =
-                    variacao != null
-                      ? valorInvestido * (variacao / 100)
-                      : Number(ativo.valor_atual || 0) - valorInvestido;
-                  const pct =
-                    valorInvestido > 0
-                      ? variacao != null
-                        ? variacao
-                        : (lucro / valorInvestido) * 100
-                      : 0;
+                  const valorAtual = Number(ativo.valor_atual || 0);
+                  const lucro = valorAtual - valorInvestido;
+                  const pct = valorInvestido > 0 ? (lucro / valorInvestido) * 100 : 0;
+                  const estaValorizado = lucro > 0;
+                  const estaDesvalorizado = lucro < 0;
 
                   return (
                     <div
@@ -838,19 +817,12 @@ export default function Investimento() {
                           </span>
                         </div>
                         <div className="flex gap-1">
-                        <button
-                          onClick={() => handleOpenInvestimento(ativo)}
-                          className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
-                          title="Cadastrar investimento"
-                        >
-                          <FaPiggyBank className="text-sm" />
-                        </button>
                           <button
-                            onClick={() => handleEditarVariacao(ativo)}
-                            className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
-                            title="Informar variação"
+                            onClick={() => handleOpenInvestimento(ativo)}
+                            className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
+                            title="Cadastrar investimento"
                           >
-                            <FaChartBar className="text-sm" />
+                            <FaPiggyBank className="text-sm" />
                           </button>
                           <button
                             onClick={() => handleEditarValorMercado(ativo)}
@@ -869,43 +841,35 @@ export default function Investimento() {
                         </div>
                       </div>
                       <div className="mt-3 space-y-1 text-sm">
-                        {ativo.variacao_percentual != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Status</span>
-                            <span
-                              className={
-                                Number(ativo.variacao_percentual) >= 0
-                                  ? "text-emerald-400 font-medium"
-                                  : "text-red-400 font-medium"
-                              }
-                            >
-                              {Number(ativo.variacao_percentual) >= 0
-                                ? "Valorizando"
-                                : "Desvalorizando"}{" "}
-                              {Math.abs(Number(ativo.variacao_percentual)).toFixed(1)}%
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Status</span>
+                          <span
+                            className={
+                              estaValorizado
+                                ? "text-emerald-400 font-medium"
+                                : estaDesvalorizado
+                                  ? "text-red-400 font-medium"
+                                  : "text-gray-300 font-medium"
+                            }
+                          >
+                            {estaValorizado
+                              ? "Valorizado"
+                              : estaDesvalorizado
+                                ? "Desvalorizado"
+                                : "Neutro"}{" "}
+                            {pct !== 0 && `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`}
+                          </span>
+                        </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Valor de mercado</span>
+                          <span className="text-gray-400">Valor na carteira</span>
                           <span className="text-white font-medium">
-                            {formatCurrency(ativo.valor_atual)}
+                            {formatCurrency(valorAtual)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Total investido</span>
                           <span className="text-gray-300">
-                            {formatCurrency(ativo.valor_investido)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Valor atual</span>
-                          <span className="text-white font-medium">
-                            {formatCurrency(
-                              variacao != null
-                                ? valorInvestido * (1 + variacao / 100)
-                                : ativo.valor_atual
-                            )}
+                            {formatCurrency(valorInvestido)}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -920,14 +884,6 @@ export default function Investimento() {
                             {pct.toFixed(1)}%)
                           </span>
                         </div>
-                        {ativo.variacao_percentual == null && (
-                          <button
-                            onClick={() => handleEditarVariacao(ativo)}
-                            className="text-xs text-amber-400 hover:text-amber-300"
-                          >
-                            + Informar valorização/desvalorização
-                          </button>
-                        )}
                       </div>
                       <button
                         onClick={() => handleOpenInvestimento(ativo)}
@@ -972,14 +928,14 @@ export default function Investimento() {
         />
       )}
 
-      {showModalVariacao && ativoParaVariacao && (
-        <ModalEditarVariacao
-          ativo={ativoParaVariacao}
+      {showModalEditarAtivo && ativoParaEditar && (
+        <ModalEditarAtivo
+          ativo={ativoParaEditar}
           onClose={() => {
-            setShowModalVariacao(false);
-            setAtivoParaVariacao(null);
+            setShowModalEditarAtivo(false);
+            setAtivoParaEditar(null);
           }}
-          onSave={handleSaveVariacao}
+          onSave={handleSaveEditarAtivo}
         />
       )}
 
