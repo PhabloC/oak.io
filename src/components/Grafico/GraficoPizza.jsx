@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Pie, PieChart } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { FiTrendingUp } from "react-icons/fi";
 import {
   Card,
   CardContent,
@@ -202,7 +202,7 @@ export default function GraficoPizza({
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none text-indigo-300">
-          <TrendingUp className="h-4 w-4" />
+          <FiTrendingUp className="h-4 w-4" />
           {trendText}
         </div>
         <div className="leading-none text-gray-500">

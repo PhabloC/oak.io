@@ -11,7 +11,7 @@ import {
   CartesianGrid,
   XAxis,
 } from "recharts";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 import {
   Card,
   CardContent,
@@ -52,12 +52,12 @@ const chartConfig = {
   receita: {
     label: "Receita",
     color: "#22c55e",
-    icon: TrendingUp,
+    icon: FiTrendingUp,
   },
   despesa: {
     label: "Despesa",
     color: "#ef4444",
-    icon: TrendingDown,
+    icon: FiTrendingDown,
   },
 };
 
@@ -334,9 +334,9 @@ export default function GraficoBarras({ selectedMonth, transactions = [] }) {
         <div className="flex w-full flex-col gap-2">
           <div className="flex items-center gap-2 font-medium leading-none text-indigo-300">
             {saldo >= 0 ? (
-              <TrendingUp className="h-4 w-4" />
+              <FiTrendingUp className="h-4 w-4" />
             ) : (
-              <TrendingDown className="h-4 w-4" />
+              <FiTrendingDown className="h-4 w-4" />
             )}
             {trendText}
           </div>

@@ -1,14 +1,90 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
-import { FaChartLine } from "react-icons/fa";
+import {
+  FaChartLine,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaBalanceScale,
+  FaHistory,
+  FaFilter,
+  FaPiggyBank,
+  FaChartBar,
+} from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
+import ModalAtivo from "../components/Modal/ModalAtivo";
+import ModalInvestimento from "../components/Modal/ModalInvestimento";
+import ModalEditarValorMercado from "../components/Modal/ModalEditarValorMercado";
+import ModalExcluirAtivo from "../components/Modal/ModalExcluirAtivo";
+import ModalRemoverInvestimentos from "../components/Modal/ModalRemoverInvestimentos";
+import ModalEditarVariacao from "../components/Modal/ModalEditarVariacao";
+import GraficoTipoAtivo from "../components/Investimento/GraficoTipoAtivo";
+import GraficoEvolucaoMensal from "../components/Investimento/GraficoEvolucaoMensal";
+import SimuladorJurosCompostos from "../components/Investimento/SimuladorJurosCompostos";
+
+const TIPOS_LABEL = {
+  acoes: "Ações",
+  fiis: "FIIs",
+  tesouro_selic: "Tesouro Selic",
+  exterior_cripto: "Exterior/Cripto",
+};
+
+const ALOCACAO_IDEAL = {
+  acoes: 0.25,
+  fiis: 0.25,
+  tesouro_selic: 0.25,
+  exterior_cripto: 0.25,
+};
+
+const MESES = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value || 0);
 
 export default function Investimento() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [ativos, setAtivos] = useState([]);
+  const [patrimonioHistorico, setPatrimonioHistorico] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModalAtivo, setShowModalAtivo] = useState(false);
+  const [showModalInvestimento, setShowModalInvestimento] = useState(false);
+  const [ativoPreSelecionadoInvestimento, setAtivoPreSelecionadoInvestimento] = useState(null);
+  const [showModalEditarValor, setShowModalEditarValor] = useState(false);
+  const [ativoParaEditarValor, setAtivoParaEditarValor] = useState(null);
+  const [showModalExcluir, setShowModalExcluir] = useState(false);
+  const [ativoParaExcluir, setAtivoParaExcluir] = useState(null);
+  const [showModalRemoverInvestimentos, setShowModalRemoverInvestimentos] = useState(false);
+  const [ativoParaRemoverInvestimentos, setAtivoParaRemoverInvestimentos] = useState(null);
+  const [showModalVariacao, setShowModalVariacao] = useState(false);
+  const [ativoParaVariacao, setAtivoParaVariacao] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [periodoInicio, setPeriodoInicio] = useState("");
+  const [periodoFim, setPeriodoFim] = useState("");
+  const [showFiltro, setShowFiltro] = useState(false);
+  const [showRegistrarSnapshot, setShowRegistrarSnapshot] = useState(false);
 
   const showSidebar =
     location.pathname === "/dashboard" ||
@@ -22,13 +98,367 @@ export default function Investimento() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/");
-      }
+      if (!user) navigate("/");
     };
-
     checkAuth();
   }, [navigate]);
+
+  const loadAtivos = async (userId) => {
+    const { data, error } = await supabase
+      .from("ativos")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (!error) setAtivos(data || []);
+  };
+
+  const loadPatrimonioHistorico = async (userId) => {
+    const { data, error } = await supabase
+      .from("patrimonio_historico")
+      .select("*")
+      .eq("user_id", userId)
+      .order("ano", { ascending: true })
+      .order("mes");
+    if (!error) setPatrimonioHistorico(data || []);
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      setLoading(true);
+      await loadAtivos(user.id);
+      await loadPatrimonioHistorico(user.id);
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  const valorMercadoEfetivo = (a) => {
+    const vInv = Number(a.valor_investido || 0);
+    const variacao = a.variacao_percentual != null ? Number(a.variacao_percentual) : null;
+    return variacao != null ? vInv * (1 + variacao / 100) : Number(a.valor_atual || 0);
+  };
+
+  const patrimonioTotal = useMemo(() => {
+    return ativos.reduce((s, a) => s + valorMercadoEfetivo(a), 0);
+  }, [ativos]);
+
+  const valorInvestidoTotal = useMemo(() => {
+    return ativos.reduce((s, a) => s + Number(a.valor_investido || 0), 0);
+  }, [ativos]);
+
+  const ativosComInvestimento = useMemo(
+    () => ativos.filter((a) => Number(a.valor_investido || 0) > 0),
+    [ativos]
+  );
+
+  const ativosParaGrafico = useMemo(
+    () =>
+      ativos.map((a) => ({
+        ...a,
+        valor_atual: valorMercadoEfetivo(a),
+      })),
+    [ativos]
+  );
+
+  const lucroPrejuizo = patrimonioTotal - valorInvestidoTotal;
+  const percentualVariacao =
+    valorInvestidoTotal > 0
+      ? ((patrimonioTotal - valorInvestidoTotal) / valorInvestidoTotal) * 100
+      : 0;
+
+  const alocacaoAtual = useMemo(() => {
+    if (patrimonioTotal <= 0) return {};
+    return ativos.reduce((acc, a) => {
+      const v = valorMercadoEfetivo(a);
+      acc[a.tipo] = (acc[a.tipo] || 0) + v;
+      return acc;
+    }, {});
+  }, [ativos, patrimonioTotal]);
+
+  const alocacaoPercentuais = useMemo(() => {
+    if (patrimonioTotal <= 0) return {};
+    return Object.fromEntries(
+      Object.entries(alocacaoAtual).map(([tipo, valor]) => [
+        tipo,
+        (valor / patrimonioTotal) * 100,
+      ]),
+    );
+  }, [alocacaoAtual, patrimonioTotal]);
+
+  const patrimonioHistoricoFiltrado = useMemo(() => {
+    if (!periodoInicio || !periodoFim) return patrimonioHistorico;
+    const [anoIni, mesIni] = periodoInicio.split("-").map(Number);
+    const [anoFim, mesFim] = periodoFim.split("-").map(Number);
+    const mesIndex = (m) => {
+      const idx = MESES.findIndex((nome) =>
+        nome.toLowerCase().startsWith(String(m).toLowerCase().slice(0, 3)),
+      );
+      return idx >= 0 ? idx + 1 : 1;
+    };
+    return patrimonioHistorico.filter((p) => {
+      const v = (p.ano || 0) * 12 + mesIndex(p.mes);
+      return v >= anoIni * 12 + mesIni && v <= anoFim * 12 + mesFim;
+    });
+  }, [patrimonioHistorico, periodoInicio, periodoFim]);
+
+  const handleSaveAtivo = async (data) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    try {
+      const payload = {
+        nome: data.nome,
+        ticker: data.ticker,
+        tipo: data.tipo,
+        valor_investido: data.valor_investido,
+        valor_atual: data.valor_atual,
+        quantidade: data.quantidade,
+        data_compra: data.data_compra,
+        taxa_selic_anual: data.taxa_selic_anual ?? null,
+      };
+      const { data: novo, error } = await supabase
+        .from("ativos")
+        .insert([{ ...payload, user_id: user.id }])
+        .select()
+        .single();
+      if (error) throw error;
+      setAtivos((prev) => [novo, ...prev]);
+      setShowModalAtivo(false);
+      setSuccessMessage("Ativo cadastrado!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao cadastrar ativo.");
+    }
+  };
+
+  const handleEditarValorMercado = (ativo) => {
+    setAtivoParaEditarValor(ativo);
+    setShowModalEditarValor(true);
+  };
+
+  const handleEditarVariacao = (ativo) => {
+    setAtivoParaVariacao(ativo);
+    setShowModalVariacao(true);
+  };
+
+  const handleSaveVariacao = async (variacaoPercentual) => {
+    if (!ativoParaVariacao) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("ativos")
+        .update({ variacao_percentual: variacaoPercentual })
+        .eq("id", ativoParaVariacao.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setAtivos((prev) =>
+        prev.map((a) =>
+          a.id === ativoParaVariacao.id
+            ? { ...a, variacao_percentual: variacaoPercentual }
+            : a
+        )
+      );
+      setShowModalVariacao(false);
+      setAtivoParaVariacao(null);
+      setSuccessMessage("Variação atualizada!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao atualizar variação.");
+    }
+  };
+
+  const handleSaveValorMercado = async (novoValor) => {
+    if (!ativoParaEditarValor) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("ativos")
+        .update({ valor_atual: novoValor })
+        .eq("id", ativoParaEditarValor.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setAtivos((prev) =>
+        prev.map((a) =>
+          a.id === ativoParaEditarValor.id ? { ...a, valor_atual: novoValor } : a
+        )
+      );
+      setShowModalEditarValor(false);
+      setAtivoParaEditarValor(null);
+      setSuccessMessage("Valor de mercado atualizado!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao atualizar valor.");
+    }
+  };
+
+  const handleOpenInvestimento = (ativo = null) => {
+    setAtivoPreSelecionadoInvestimento(ativo);
+    setShowModalInvestimento(true);
+  };
+
+  const handleSaveInvestimento = async (ativo, valorInvestimento, novoValorAtual) => {
+    if (!ativo || valorInvestimento <= 0) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const novoInvestido =
+      Number(ativo.valor_investido || 0) + valorInvestimento;
+
+    try {
+      const { error } = await supabase
+        .from("ativos")
+        .update({
+          valor_investido: novoInvestido,
+          valor_atual: novoValorAtual,
+        })
+        .eq("id", ativo.id)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setAtivos((prev) =>
+        prev.map((a) =>
+          a.id === ativo.id
+            ? { ...a, valor_investido: novoInvestido, valor_atual: novoValorAtual }
+            : a
+        )
+      );
+      setShowModalInvestimento(false);
+      setAtivoPreSelecionadoInvestimento(null);
+      setSuccessMessage("Investimento registrado!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao registrar investimento.");
+    }
+  };
+
+  const handleOpenExcluir = (ativo) => {
+    setAtivoParaExcluir(ativo);
+    setShowModalExcluir(true);
+  };
+
+  const handleOpenRemoverInvestimentos = (ativo) => {
+    setAtivoParaRemoverInvestimentos(ativo);
+    setShowModalRemoverInvestimentos(true);
+  };
+
+  const handleRemoverInvestimentos = async () => {
+    if (!ativoParaRemoverInvestimentos) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("ativos")
+        .update({ valor_investido: 0 })
+        .eq("id", ativoParaRemoverInvestimentos.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setAtivos((prev) =>
+        prev.map((a) =>
+          a.id === ativoParaRemoverInvestimentos.id
+            ? { ...a, valor_investido: 0 }
+            : a
+        )
+      );
+      setShowModalRemoverInvestimentos(false);
+      setAtivoParaRemoverInvestimentos(null);
+      setSuccessMessage("Investimentos removidos. O ativo permanece cadastrado.");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao remover investimentos.");
+      setShowModalRemoverInvestimentos(false);
+      setAtivoParaRemoverInvestimentos(null);
+    }
+  };
+
+  const handleConfirmDeleteAtivo = async () => {
+    if (!ativoParaExcluir) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("ativos")
+        .delete()
+        .eq("id", ativoParaExcluir.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setAtivos((prev) => prev.filter((a) => a.id !== ativoParaExcluir.id));
+      setSuccessMessage("Ativo excluído.");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao excluir ativo.");
+    }
+    setShowModalExcluir(false);
+    setAtivoParaExcluir(null);
+  };
+
+  const handleRegistrarSnapshot = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const hoje = new Date();
+    const mes = MESES[hoje.getMonth()];
+    const ano = hoje.getFullYear();
+    try {
+      await supabase
+        .from("patrimonio_historico")
+        .upsert(
+          { user_id: user.id, total_patrimonio: patrimonioTotal, mes, ano },
+          { onConflict: "user_id,mes,ano" },
+        );
+      await loadPatrimonioHistorico(user.id);
+      setShowRegistrarSnapshot(false);
+      setSuccessMessage("Snapshot registrado!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao registrar snapshot.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-white flex min-h-screen">
+        {showSidebar && (
+          <Sidebar
+            isMobileOpen={isMobileMenuOpen}
+            onClose={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+          <div className="p-4 md:ml-28 flex flex-col flex-1 items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
+            <p className="text-gray-400 mt-4">Carregando investimentos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="text-white flex min-h-screen">
@@ -41,26 +471,573 @@ export default function Investimento() {
       <div className="flex-1 flex flex-col overflow-y-auto">
         <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
         <div className="p-4 md:ml-28 ml-0 flex flex-col pb-8 flex-1">
-          <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md p-12 rounded-xl border border-indigo-500/20 text-center max-w-md">
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 bg-indigo-600/30 rounded-full flex items-center justify-center">
-                  <FaChartLine className="text-4xl text-indigo-400" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-4">
-                Investimento
-              </h2>
-              <p className="text-indigo-300 text-lg font-medium">
-                Em breve
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+              Investimentos
+            </h1>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowModalAtivo(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <FaPlus className="text-lg" />
+                <span>Cadastrar ativo</span>
+              </button>
+              <button
+                onClick={() => handleOpenInvestimento(null)}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <FaPiggyBank className="text-lg" />
+                <span>Cadastrar investimento</span>
+              </button>
+            </div>
+          </div>
+
+          {successMessage && (
+            <div className="bg-emerald-600/80 text-white p-3 rounded-lg mb-4">
+              {successMessage}
+            </div>
+          )}
+
+          {/* Cards: Patrimônio investido, Lucro/Prejuízo, Total investido */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-gray-800/40 to-gray-800/30 backdrop-blur-md rounded-xl border border-indigo-500/20 p-6">
+              <p className="text-gray-400 text-sm mb-1">Patrimônio investido</p>
+              <p className="text-2xl font-bold text-white">
+                {formatCurrency(patrimonioTotal)}
               </p>
-              <p className="text-gray-400 text-sm mt-2">
-                Estamos trabalhando nesta funcionalidade. Em breve você poderá acompanhar seus investimentos por aqui.
+              <p className="text-xs text-gray-500 mt-1">
+                Valor atual dos investimentos (com lucro ou prejuízo)
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-gray-800/40 to-gray-800/30 backdrop-blur-md rounded-xl border border-indigo-500/20 p-6">
+              <p className="text-gray-400 text-sm mb-1">Lucro / Prejuízo</p>
+              <p
+                className={`text-2xl font-bold ${lucroPrejuizo >= 0 ? "text-emerald-400" : "text-red-400"}`}
+              >
+                {formatCurrency(lucroPrejuizo)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Valor de mercado − Patrimônio investido (calculado automaticamente)
+              </p>
+              <p
+                className={`text-sm mt-1 ${lucroPrejuizo >= 0 ? "text-emerald-300" : "text-red-300"}`}
+              >
+                {percentualVariacao >= 0 ? "+" : ""}
+                {percentualVariacao.toFixed(2)}% sobre o total investido
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-gray-800/40 to-gray-800/30 backdrop-blur-md rounded-xl border border-indigo-500/20 p-6">
+              <p className="text-gray-400 text-sm mb-1">Total investido</p>
+              <p className="text-2xl font-bold text-white">
+                {formatCurrency(valorInvestidoTotal)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Soma do que você colocou em cada ativo
               </p>
             </div>
           </div>
+
+          {/* Ativos cadastrados */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">Ativos cadastrados</h2>
+            {ativos.length === 0 ? (
+              <div className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-8 text-center text-gray-500">
+                Nenhum ativo cadastrado. Clique em &quot;Cadastrar ativo&quot;
+                para começar.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {ativos.map((ativo) => (
+                  <div
+                    key={ativo.id}
+                    className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-white">{ativo.nome}</p>
+                        <span className="text-xs text-gray-400">
+                          {TIPOS_LABEL[ativo.tipo]}
+                        </span>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleOpenInvestimento(ativo)}
+                          className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
+                          title="Cadastrar investimento"
+                        >
+                          <FaPiggyBank className="text-sm" />
+                        </button>
+                        <button
+                          onClick={() => handleEditarVariacao(ativo)}
+                          className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
+                          title="Informar variação"
+                        >
+                          <FaChartBar className="text-sm" />
+                        </button>
+                        <button
+                          onClick={() => handleEditarValorMercado(ativo)}
+                          className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 text-indigo-400"
+                          title="Editar valor de mercado"
+                        >
+                          <FaEdit className="text-sm" />
+                        </button>
+                        <button
+                          onClick={() => handleOpenExcluir(ativo)}
+                          className="p-2 rounded-lg bg-gray-700/50 hover:bg-red-600/50 text-red-400"
+                          title="Excluir"
+                        >
+                          <FaTrash className="text-sm" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Valor de mercado</span>
+                        <span className="text-white font-medium">
+                          {formatCurrency(ativo.valor_atual)}
+                        </span>
+                      </div>
+                      {ativo.variacao_percentual != null && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">Variação</span>
+                          <span
+                            className={
+                              Number(ativo.variacao_percentual) >= 0
+                                ? "text-emerald-400"
+                                : "text-red-400"
+                            }
+                          >
+                            {Number(ativo.variacao_percentual) >= 0 ? "+" : ""}
+                            {Number(ativo.variacao_percentual).toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                      {ativo.variacao_percentual == null && (
+                        <button
+                          onClick={() => handleEditarVariacao(ativo)}
+                          className="text-xs text-amber-400 hover:text-amber-300 mt-1"
+                        >
+                          + Informar valorização/desvalorização
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleOpenInvestimento(ativo)}
+                      className="mt-3 w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <FaPiggyBank className="text-xs" />
+                      Cadastrar investimento
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Gráficos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <GraficoTipoAtivo ativos={ativosParaGrafico} />
+            <GraficoEvolucaoMensal
+              patrimonioHistorico={patrimonioHistoricoFiltrado}
+              periodoInicio={periodoInicio}
+              periodoFim={periodoFim}
+            />
+          </div>
+
+          {/* Alocação ideal */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <FaBalanceScale className="text-indigo-400" />
+              <h2 className="text-xl font-bold">Alocação ideal (25% cada)</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Object.entries(ALOCACAO_IDEAL).map(([tipo, alvo]) => {
+                const atual = alocacaoPercentuais[tipo] || 0;
+                const diff = atual - alvo * 100;
+                return (
+                  <div
+                    key={tipo}
+                    className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4"
+                  >
+                    <p className="text-gray-400 text-sm">{TIPOS_LABEL[tipo]}</p>
+                    <div className="flex justify-between items-baseline mt-1">
+                      <span className="text-white font-semibold">
+                        {atual.toFixed(1)}%
+                      </span>
+                      <span className="text-gray-500 text-xs">meta 25%</span>
+                    </div>
+                    <div className="h-2 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, atual)}%` }}
+                      />
+                    </div>
+                    {diff < -2 && (
+                      <p className="text-amber-400 text-xs mt-1">
+                        Investir mais:{" "}
+                        {formatCurrency(
+                          alvo * patrimonioTotal - (alocacaoAtual[tipo] || 0),
+                        )}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Simulador */}
+          <div className="mb-8">
+            <SimuladorJurosCompostos />
+          </div>
+
+          {/* Histórico + filtro */}
+          <div className="mb-8">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <FaHistory className="text-indigo-400" />
+                Histórico de evolução patrimonial
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFiltro(!showFiltro)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/50 text-gray-300 hover:bg-gray-700"
+                >
+                  <FaFilter />
+                  Filtrar período
+                </button>
+                <button
+                  onClick={() => setShowRegistrarSnapshot(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600/80 text-white hover:bg-indigo-600"
+                >
+                  Registrar snapshot
+                </button>
+              </div>
+            </div>
+
+            {showFiltro && (
+              <div className="flex flex-wrap gap-4 p-4 bg-gray-800/30 rounded-xl border border-indigo-500/20 mb-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">De</label>
+                  <input
+                    type="month"
+                    value={periodoInicio}
+                    onChange={(e) => setPeriodoInicio(e.target.value)}
+                    className="p-2 rounded-lg bg-gray-700/50 text-white border border-gray-600/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">
+                    Até
+                  </label>
+                  <input
+                    type="month"
+                    value={periodoFim}
+                    onChange={(e) => setPeriodoFim(e.target.value)}
+                    className="p-2 rounded-lg bg-gray-700/50 text-white border border-gray-600/50"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setPeriodoInicio("");
+                    setPeriodoFim("");
+                  }}
+                  className="self-end px-3 py-2 rounded-lg bg-gray-600 text-gray-300 hover:bg-gray-500"
+                >
+                  Limpar
+                </button>
+              </div>
+            )}
+
+            <div className="overflow-x-auto rounded-xl border border-indigo-500/20 bg-gray-800/40">
+              {patrimonioHistoricoFiltrado.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  Nenhum registro no período. Clique em &quot;Registrar
+                  snapshot&quot; para salvar o patrimônio atual.
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left p-3 text-gray-400 font-medium">
+                        Mês/Ano
+                      </th>
+                      <th className="text-right p-3 text-gray-400 font-medium">
+                        Patrimônio
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...patrimonioHistoricoFiltrado]
+                      .sort((a, b) => {
+                        const vA =
+                          (a.ano || 0) * 12 + MESES.indexOf(a.mes || "");
+                        const vB =
+                          (b.ano || 0) * 12 + MESES.indexOf(b.mes || "");
+                        return vB - vA;
+                      })
+                      .map((h) => (
+                        <tr
+                          key={h.id}
+                          className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                        >
+                          <td className="p-3">
+                            {h.mes} / {h.ano}
+                          </td>
+                          <td className="p-3 text-right font-semibold text-emerald-400">
+                            {formatCurrency(h.total_patrimonio)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Seus investimentos */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">Seus investimentos</h2>
+            {ativosComInvestimento.length === 0 ? (
+              <div className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-8 text-center text-gray-500">
+                Nenhum investimento cadastrado. Selecione um ativo e clique em
+                &quot;Cadastrar investimento&quot; para começar.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {ativosComInvestimento.map((ativo) => {
+                  const valorInvestido = Number(ativo.valor_investido || 0);
+                  const variacao = ativo.variacao_percentual != null
+                    ? Number(ativo.variacao_percentual)
+                    : null;
+
+                  const lucro =
+                    variacao != null
+                      ? valorInvestido * (variacao / 100)
+                      : Number(ativo.valor_atual || 0) - valorInvestido;
+                  const pct =
+                    valorInvestido > 0
+                      ? variacao != null
+                        ? variacao
+                        : (lucro / valorInvestido) * 100
+                      : 0;
+
+                  return (
+                    <div
+                      key={ativo.id}
+                      className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-white">
+                            {ativo.nome}
+                          </p>
+                          <span className="text-xs text-gray-400">
+                            {TIPOS_LABEL[ativo.tipo]}
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
+                        <button
+                          onClick={() => handleOpenInvestimento(ativo)}
+                          className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
+                          title="Cadastrar investimento"
+                        >
+                          <FaPiggyBank className="text-sm" />
+                        </button>
+                          <button
+                            onClick={() => handleEditarVariacao(ativo)}
+                            className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
+                            title="Informar variação"
+                          >
+                            <FaChartBar className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => handleEditarValorMercado(ativo)}
+                            className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 text-indigo-400"
+                            title="Editar valor de mercado"
+                          >
+                            <FaEdit className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenRemoverInvestimentos(ativo)}
+                            className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
+                            title="Remover investimentos"
+                          >
+                            <FaTrash className="text-sm" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-1 text-sm">
+                        {ativo.variacao_percentual != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Status</span>
+                            <span
+                              className={
+                                Number(ativo.variacao_percentual) >= 0
+                                  ? "text-emerald-400 font-medium"
+                                  : "text-red-400 font-medium"
+                              }
+                            >
+                              {Number(ativo.variacao_percentual) >= 0
+                                ? "Valorizando"
+                                : "Desvalorizando"}{" "}
+                              {Math.abs(Number(ativo.variacao_percentual)).toFixed(1)}%
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Valor de mercado</span>
+                          <span className="text-white font-medium">
+                            {formatCurrency(ativo.valor_atual)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Total investido</span>
+                          <span className="text-gray-300">
+                            {formatCurrency(ativo.valor_investido)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Valor atual</span>
+                          <span className="text-white font-medium">
+                            {formatCurrency(
+                              variacao != null
+                                ? valorInvestido * (1 + variacao / 100)
+                                : ativo.valor_atual
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Lucro/Prejuízo</span>
+                          <span
+                            className={
+                              lucro >= 0 ? "text-emerald-400" : "text-red-400"
+                            }
+                          >
+                            {lucro >= 0 ? "+" : ""}
+                            {formatCurrency(lucro)} ({pct >= 0 ? "+" : ""}
+                            {pct.toFixed(1)}%)
+                          </span>
+                        </div>
+                        {ativo.variacao_percentual == null && (
+                          <button
+                            onClick={() => handleEditarVariacao(ativo)}
+                            className="text-xs text-amber-400 hover:text-amber-300"
+                          >
+                            + Informar valorização/desvalorização
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleOpenInvestimento(ativo)}
+                        className="mt-3 w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <FaPiggyBank className="text-xs" />
+                        Cadastrar investimento
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {showModalAtivo && (
+        <ModalAtivo onClose={() => setShowModalAtivo(false)} onSave={handleSaveAtivo} />
+      )}
+
+      {showModalInvestimento && (
+        <ModalInvestimento
+          ativos={ativos}
+          ativoPreSelecionado={ativoPreSelecionadoInvestimento}
+          onClose={() => {
+            setShowModalInvestimento(false);
+            setAtivoPreSelecionadoInvestimento(null);
+          }}
+          onSave={handleSaveInvestimento}
+        />
+      )}
+
+      {showModalEditarValor && ativoParaEditarValor && (
+        <ModalEditarValorMercado
+          ativo={ativoParaEditarValor}
+          onClose={() => {
+            setShowModalEditarValor(false);
+            setAtivoParaEditarValor(null);
+          }}
+          onSave={handleSaveValorMercado}
+        />
+      )}
+
+      {showModalVariacao && ativoParaVariacao && (
+        <ModalEditarVariacao
+          ativo={ativoParaVariacao}
+          onClose={() => {
+            setShowModalVariacao(false);
+            setAtivoParaVariacao(null);
+          }}
+          onSave={handleSaveVariacao}
+        />
+      )}
+
+      {showModalRemoverInvestimentos && ativoParaRemoverInvestimentos && (
+        <ModalRemoverInvestimentos
+          ativo={ativoParaRemoverInvestimentos}
+          onClose={() => {
+            setShowModalRemoverInvestimentos(false);
+            setAtivoParaRemoverInvestimentos(null);
+          }}
+          onConfirm={handleRemoverInvestimentos}
+        />
+      )}
+
+      {showModalExcluir && ativoParaExcluir && (
+        <ModalExcluirAtivo
+          ativo={ativoParaExcluir}
+          onClose={() => {
+            setShowModalExcluir(false);
+            setAtivoParaExcluir(null);
+          }}
+          onConfirm={handleConfirmDeleteAtivo}
+        />
+      )}
+
+      {showRegistrarSnapshot && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Registrar snapshot</h2>
+              <button
+                onClick={() => setShowRegistrarSnapshot(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <IoClose className="text-2xl" />
+              </button>
+            </div>
+            <p className="text-gray-300 mb-4">
+              Salvar o patrimônio atual ({formatCurrency(patrimonioTotal)}) como
+              snapshot do mês?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowRegistrarSnapshot(false)}
+                className="px-4 py-2 rounded-lg bg-gray-600 text-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRegistrarSnapshot}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white"
+              >
+                Registrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
