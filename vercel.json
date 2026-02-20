@@ -6,7 +6,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https://images.unsplash.com https://*.googleusercontent.com https://ui-avatars.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self'; connect-src 'self' https://*.supabase.co https://api.pexels.com; img-src 'self' data: https://images.unsplash.com https://images.pexels.com https://*.googleusercontent.com https://ui-avatars.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
         },
         {
           "key": "X-Content-Type-Options",
