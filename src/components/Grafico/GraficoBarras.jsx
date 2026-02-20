@@ -68,11 +68,11 @@ const formatCurrency = (value) =>
     minimumFractionDigits: 2,
   }).format(value);
 
-export default function GraficoBarras({ selectedMonth, transactions = [] }) {
+export default function GraficoBarras({ selectedMonth, selectedYear, transactions = [] }) {
   const [viewMode, setViewMode] = useState("month");
   const [chartType, setChartType] = useState("bar"); // "bar" | "line" | "area"
 
-  const year = new Date().getFullYear();
+  const year = selectedYear || new Date().getFullYear();
 
   const chartData =
     viewMode === "month"

@@ -32,8 +32,8 @@ export function validateTransactionForm({ title, value, date, type }) {
   if (typeof value !== "number" || value <= 0 || value > 999999999.99) {
     errors.push("Valor deve ser positivo e menor que R$ 999.999.999,99.");
   }
-  if (!date || !sanitizeDate(date)) {
-    errors.push("Data inválida ou no futuro.");
+  if (!date || !sanitizeDate(date, { allowFuture: true })) {
+    errors.push("Data inválida.");
   }
   if (!["Ganho", "Gasto", "Investimento"].includes(type)) {
     errors.push("Tipo de transação inválido.");

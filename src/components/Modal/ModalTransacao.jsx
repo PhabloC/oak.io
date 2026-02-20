@@ -42,8 +42,14 @@ export default function ModalTransacao({ onClose, onSave }) {
     setValue(formatted);
   };
 
-  // Calcula a data máxima (hoje) no formato YYYY-MM-DD
-  const maxDate = new Date().toISOString().split("T")[0];
+  const getMonthName = (dateString) => {
+    const months = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    const [, month] = dateString.split("-");
+    return months[parseInt(month, 10) - 1];
+  };
 
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
@@ -64,13 +70,7 @@ export default function ModalTransacao({ onClose, onSave }) {
       return;
     }
 
-    const selectedDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDate > today) {
-      alert("Não é possível selecionar datas futuras!");
-      return;
-    }
+    const monthFromDate = getMonthName(date);
 
     const transaction = {
       title: cleanTitle,
@@ -78,6 +78,7 @@ export default function ModalTransacao({ onClose, onSave }) {
       type,
       method,
       date,
+      month: monthFromDate,
       category: category || null,
       description: cleanDescription || null,
     };
@@ -92,7 +93,7 @@ export default function ModalTransacao({ onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn">
-      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-xs sm:max-w-md border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
+      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl shadow-purple-500/20 w-full max-w-xs sm:max-w-md lg:max-w-2xl border border-gray-700/50 transition-all duration-300 animate-scaleIn max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
@@ -110,8 +111,8 @@ export default function ModalTransacao({ onClose, onSave }) {
             <IoClose className="text-2xl" />
           </button>
         </div>
-        <form className="space-y-5" onSubmit={handleSaveTransaction}>
-          <div>
+        <form className="grid grid-cols-1 lg:grid-cols-2 gap-5" onSubmit={handleSaveTransaction}>
+          <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-2 text-indigo-200">
               Título
             </label>
@@ -143,6 +144,18 @@ export default function ModalTransacao({ onClose, onSave }) {
                 required
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2 text-indigo-200">
+              Data
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-indigo-200">
@@ -189,20 +202,7 @@ export default function ModalTransacao({ onClose, onSave }) {
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-indigo-200">
-              Data
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              max={maxDate}
-              className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
-              required
-            />
-          </div>
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-2 text-indigo-200">
               Descrição (opcional)
             </label>
@@ -215,7 +215,7 @@ export default function ModalTransacao({ onClose, onSave }) {
               rows="3"
             />
           </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6">
+          <div className="lg:col-span-2 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-2">
             <button
               type="button"
               onClick={onClose}
