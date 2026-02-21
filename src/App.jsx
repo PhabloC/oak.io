@@ -9,6 +9,7 @@ import Transactions from "./pages/Transactions";
 import Metas from "./pages/Metas";
 import Dividas from "./pages/Dividas";
 import Investimento from "./pages/Investimento";
+import Perfil from "./pages/Perfil";
 
 export default function App() {
   return (
@@ -57,6 +58,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <Investimento />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/perfil"
+                  element={
+                    <ProtectedRoute>
+                      <Perfil />
                     </ProtectedRoute>
                   }
                 />

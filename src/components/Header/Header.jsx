@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { FaBars } from "react-icons/fa";
 
@@ -68,16 +69,19 @@ export default function Header({ onMenuClick }) {
       {/* Espaçador invisível no desktop para manter alinhamento */}
       <div className="hidden md:block" />
 
-      {/* Info do usuário */}
+      {/* Info do usuário - link para perfil */}
       {user ? (
-        <div className="flex items-center space-x-2 sm:space-x-4 px-2 sm:px-4 py-1 rounded-xl bg-indigo-800/30 border border-indigo-700/30">
+        <Link
+          to="/perfil"
+          className="flex items-center space-x-2 sm:space-x-4 px-2 sm:px-4 py-1 rounded-xl bg-indigo-800/30 border border-indigo-700/30 hover:bg-indigo-800/50 transition-colors"
+        >
           <img
             src={userPhoto}
             alt="Foto de Perfil"
             className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-indigo-400/50 shadow-lg"
           />
           <p className="text-xs sm:text-sm font-semibold text-indigo-100 max-w-[100px] sm:max-w-none truncate">{userName}</p>
-        </div>
+        </Link>
       ) : (
         <div className="px-2 sm:px-4 py-2 rounded-xl bg-indigo-800/30 border border-indigo-700/30">
           <p className="text-xs sm:text-sm font-semibold text-indigo-200 animate-pulse">
