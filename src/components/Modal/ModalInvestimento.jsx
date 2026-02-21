@@ -17,12 +17,15 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
   useEffect(() => {
     if (ativoPreSelecionado) {
       setAtivoSelecionado(ativoPreSelecionado);
+      setEmergencia(ativoPreSelecionado.emergencia === true);
     } else if (ativos.length > 0 && !ativoPreSelecionado) {
       setAtivoSelecionado(ativos[0]);
+      setEmergencia(ativos[0]?.emergencia === true);
     }
   }, [ativoPreSelecionado, ativos]);
   const [valorInvestimento, setValorInvestimento] = useState("");
   const [valorCarteira, setValorCarteira] = useState("");
+  const [emergencia, setEmergencia] = useState(false);
 
   const formatInputCurrency = (value) => {
     if (!value) return "";
@@ -52,7 +55,7 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
       alert("Informe o valor total da sua carteira.");
       return;
     }
-    onSave(ativoSelecionado, valor, carteira);
+    onSave(ativoSelecionado, valor, carteira, emergencia);
     onClose();
   };
 
@@ -109,6 +112,7 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
               onChange={(e) => {
                 const a = ativos.find((x) => x.id === e.target.value);
                 setAtivoSelecionado(a || null);
+                setEmergencia(a?.emergencia === true);
               }}
               className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 outline-none cursor-pointer"
             >
@@ -174,6 +178,19 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
                 required
               />
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="emergencia"
+              checked={emergencia}
+              onChange={(e) => setEmergencia(e.target.checked)}
+              className="rounded border-gray-600 bg-gray-700 text-amber-500 focus:ring-amber-500"
+            />
+            <label htmlFor="emergencia" className="text-sm text-gray-300 cursor-pointer">
+              Contabilizar na reserva de emergência
+            </label>
           </div>
 
           {temDados && (

@@ -42,7 +42,15 @@ function calcularJurosCompostos(aporteMensal, taxaMensal, meses, valorInicial = 
   return projecao;
 }
 
-export default function SimuladorJurosCompostos() {
+const formatValorInicial = (v) => {
+  if (!v || v <= 0) return "0,00";
+  return v.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+export default function SimuladorJurosCompostos({ patrimonioAtual = 0 }) {
   const [aporteMensal, setAporteMensal] = useState("500");
   const [taxaAnual, setTaxaAnual] = useState("12");
   const [tempoMeses, setTempoMeses] = useState("120");
@@ -103,13 +111,24 @@ export default function SimuladorJurosCompostos() {
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Valor inicial (R$)
             </label>
-            <input
-              type="text"
-              value={valorInicial}
-              onChange={(e) => setValorInicial(formatInputCurrency(e.target.value))}
-              className="w-full p-2 rounded-lg bg-gray-700/50 text-white border border-gray-600/50"
-              placeholder="0,00"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={valorInicial}
+                onChange={(e) => setValorInicial(formatInputCurrency(e.target.value))}
+                className="flex-1 p-2 rounded-lg bg-gray-700/50 text-white border border-gray-600/50"
+                placeholder="0,00"
+              />
+              {patrimonioAtual > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setValorInicial(formatValorInicial(patrimonioAtual))}
+                  className="px-3 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-sm whitespace-nowrap"
+                >
+                  Usar patrimônio atual
+                </button>
+              )}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">

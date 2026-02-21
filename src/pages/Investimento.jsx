@@ -12,6 +12,8 @@ import {
   FaFilter,
   FaPiggyBank,
   FaCog,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import ModalAtivo from "../components/Modal/ModalAtivo";
@@ -23,6 +25,7 @@ import ModalRemoverInvestimentos from "../components/Modal/ModalRemoverInvestime
 import GraficoTipoAtivo from "../components/Investimento/GraficoTipoAtivo";
 import GraficoEvolucaoMensal from "../components/Investimento/GraficoEvolucaoMensal";
 import SimuladorJurosCompostos from "../components/Investimento/SimuladorJurosCompostos";
+import { BsFillShieldLockFill } from "react-icons/bs";
 
 const TIPOS_LABEL = {
   acoes: "Ações",
@@ -74,20 +77,64 @@ export default function Investimento() {
   const [loading, setLoading] = useState(true);
   const [showModalAtivo, setShowModalAtivo] = useState(false);
   const [showModalInvestimento, setShowModalInvestimento] = useState(false);
-  const [ativoPreSelecionadoInvestimento, setAtivoPreSelecionadoInvestimento] = useState(null);
+  const [ativoPreSelecionadoInvestimento, setAtivoPreSelecionadoInvestimento] =
+    useState(null);
   const [showModalEditarValor, setShowModalEditarValor] = useState(false);
   const [ativoParaEditarValor, setAtivoParaEditarValor] = useState(null);
   const [showModalEditarAtivo, setShowModalEditarAtivo] = useState(false);
   const [ativoParaEditar, setAtivoParaEditar] = useState(null);
   const [showModalExcluir, setShowModalExcluir] = useState(false);
   const [ativoParaExcluir, setAtivoParaExcluir] = useState(null);
-  const [showModalRemoverInvestimentos, setShowModalRemoverInvestimentos] = useState(false);
-  const [ativoParaRemoverInvestimentos, setAtivoParaRemoverInvestimentos] = useState(null);
+  const [showModalRemoverInvestimentos, setShowModalRemoverInvestimentos] =
+    useState(false);
+  const [ativoParaRemoverInvestimentos, setAtivoParaRemoverInvestimentos] =
+    useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [showFiltro, setShowFiltro] = useState(false);
   const [showRegistrarSnapshot, setShowRegistrarSnapshot] = useState(false);
+  const [gastosMediosMensais, setGastosMediosMensais] = useState(0);
+  const [pageAtivos, setPageAtivos] = useState(1);
+  const [pageInvestimentos, setPageInvestimentos] = useState(1);
+
+  const ITENS_POR_PAGINA = 6;
+
+  const STORAGE_GASTO_MENSAL = "oak_reserva_gasto_mensal";
+  const STORAGE_MESES_RESERVA = "oak_reserva_meses";
+  const STORAGE_GASTO_LOCK = "oak_reserva_gasto_lock";
+
+  const [gastoMensalManual, setGastoMensalManual] = useState(() => {
+    try {
+      const v = localStorage.getItem(STORAGE_GASTO_MENSAL);
+      return v !== null ? v : "";
+    } catch {
+      return "";
+    }
+  });
+  const [gastoEdit, setGastoEdit] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_GASTO_MENSAL) || "";
+      return saved;
+    } catch {
+      return "";
+    }
+  });
+  const [gastoLocked, setGastoLocked] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_GASTO_LOCK) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [mesesReserva, setMesesReserva] = useState(() => {
+    try {
+      const v = localStorage.getItem(STORAGE_MESES_RESERVA);
+      return v === "12" ? "12" : "6";
+    } catch {
+      return "6";
+    }
+  });
 
   const showSidebar =
     location.pathname === "/dashboard" ||
@@ -125,6 +172,37 @@ export default function Investimento() {
     if (!error) setPatrimonioHistorico(data || []);
   };
 
+  const loadGastosUltimos6Meses = async (userId) => {
+    const hoje = new Date();
+    const dataFim = new Date(
+      hoje.getFullYear(),
+      hoje.getMonth(),
+      hoje.getDate(),
+    );
+    const dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 6, 1);
+    const startDate = dataInicio.toISOString().slice(0, 10);
+    const endDate = dataFim.toISOString().slice(0, 10);
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("date, type, value")
+      .eq("user_id", userId)
+      .eq("type", "Gasto")
+      .gte("date", startDate)
+      .lte("date", endDate);
+    if (error) return;
+    const porMes = {};
+    (data || []).forEach((t) => {
+      const [y, m] = (t.date || "").split("-");
+      const key = `${y}-${m}`;
+      if (!porMes[key]) porMes[key] = 0;
+      porMes[key] += Math.abs(Number(t.value) || 0);
+    });
+    const mesesComDados = Object.keys(porMes);
+    const total = mesesComDados.reduce((s, k) => s + porMes[k], 0);
+    const media = mesesComDados.length > 0 ? total / mesesComDados.length : 0;
+    setGastosMediosMensais(media);
+  };
+
   useEffect(() => {
     const init = async () => {
       const {
@@ -134,6 +212,7 @@ export default function Investimento() {
       setLoading(true);
       await loadAtivos(user.id);
       await loadPatrimonioHistorico(user.id);
+      await loadGastosUltimos6Meses(user.id);
       setLoading(false);
     };
     init();
@@ -147,14 +226,85 @@ export default function Investimento() {
     return ativos.reduce((s, a) => s + valorMercadoEfetivo(a), 0);
   }, [ativos]);
 
+  const patrimonioEmergencia = useMemo(() => {
+    return ativos
+      .filter((a) => a.emergencia === true)
+      .reduce((s, a) => s + valorMercadoEfetivo(a), 0);
+  }, [ativos]);
+
+  useEffect(() => {
+    if (gastoLocked) {
+      setGastoEdit(gastoMensalManual);
+    }
+  }, [gastoLocked, gastoMensalManual]);
+
+  const handleSalvarGasto = () => {
+    setGastoMensalManual(gastoEdit);
+    try {
+      localStorage.setItem(STORAGE_GASTO_MENSAL, gastoEdit);
+      localStorage.setItem(STORAGE_GASTO_LOCK, "true");
+    } catch {}
+    setGastoLocked(true);
+  };
+
+  const handleEditarGasto = () => {
+    setGastoEdit(gastoMensalManual);
+    setGastoLocked(false);
+    try {
+      localStorage.setItem(STORAGE_GASTO_LOCK, "false");
+    } catch {}
+  };
+
+  const gastoEditDirty = gastoEdit !== gastoMensalManual;
+  const parseGastoNum = (v) => {
+    if (!v) return 0;
+    const c = String(v).replace(/\./g, "").replace(",", ".");
+    return parseFloat(c) || 0;
+  };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_MESES_RESERVA, mesesReserva);
+    } catch {}
+  }, [mesesReserva]);
+
   const valorInvestidoTotal = useMemo(() => {
     return ativos.reduce((s, a) => s + Number(a.valor_investido || 0), 0);
   }, [ativos]);
 
   const ativosComInvestimento = useMemo(
     () => ativos.filter((a) => Number(a.valor_investido || 0) > 0),
-    [ativos]
+    [ativos],
   );
+
+  const ativosPaginados = useMemo(() => {
+    const start = (pageAtivos - 1) * ITENS_POR_PAGINA;
+    return ativos.slice(start, start + ITENS_POR_PAGINA);
+  }, [ativos, pageAtivos]);
+
+  const investimentosPaginados = useMemo(() => {
+    const start = (pageInvestimentos - 1) * ITENS_POR_PAGINA;
+    return ativosComInvestimento.slice(start, start + ITENS_POR_PAGINA);
+  }, [ativosComInvestimento, pageInvestimentos]);
+
+  const totalPaginasAtivos = Math.ceil(ativos.length / ITENS_POR_PAGINA) || 1;
+  const totalPaginasInvestimentos =
+    Math.ceil(ativosComInvestimento.length / ITENS_POR_PAGINA) || 1;
+
+  useEffect(() => {
+    if (pageAtivos > totalPaginasAtivos && totalPaginasAtivos > 0) {
+      setPageAtivos(totalPaginasAtivos);
+    }
+  }, [pageAtivos, totalPaginasAtivos]);
+
+  useEffect(() => {
+    if (
+      pageInvestimentos > totalPaginasInvestimentos &&
+      totalPaginasInvestimentos > 0
+    ) {
+      setPageInvestimentos(totalPaginasInvestimentos);
+    }
+  }, [pageInvestimentos, totalPaginasInvestimentos]);
 
   const ativosParaGrafico = useMemo(
     () =>
@@ -162,7 +312,7 @@ export default function Investimento() {
         ...a,
         valor_atual: valorMercadoEfetivo(a),
       })),
-    [ativos]
+    [ativos],
   );
 
   const lucroPrejuizo = patrimonioTotal - valorInvestidoTotal;
@@ -258,8 +408,10 @@ export default function Investimento() {
       if (error) throw error;
       setAtivos((prev) =>
         prev.map((a) =>
-          a.id === ativoParaEditarValor.id ? { ...a, valor_atual: novoValor } : a
-        )
+          a.id === ativoParaEditarValor.id
+            ? { ...a, valor_atual: novoValor }
+            : a,
+        ),
       );
       setShowModalEditarValor(false);
       setAtivoParaEditarValor(null);
@@ -289,6 +441,7 @@ export default function Investimento() {
           nome: dados.nome,
           ticker: dados.ticker,
           tipo: dados.tipo,
+          emergencia: dados.emergencia ?? false,
         })
         .eq("id", ativoParaEditar.id)
         .eq("user_id", user.id);
@@ -296,9 +449,15 @@ export default function Investimento() {
       setAtivos((prev) =>
         prev.map((a) =>
           a.id === ativoParaEditar.id
-            ? { ...a, nome: dados.nome, ticker: dados.ticker, tipo: dados.tipo }
-            : a
-        )
+            ? {
+                ...a,
+                nome: dados.nome,
+                ticker: dados.ticker,
+                tipo: dados.tipo,
+                emergencia: dados.emergencia ?? false,
+              }
+            : a,
+        ),
       );
       setShowModalEditarAtivo(false);
       setAtivoParaEditar(null);
@@ -315,7 +474,12 @@ export default function Investimento() {
     setShowModalInvestimento(true);
   };
 
-  const handleSaveInvestimento = async (ativo, valorInvestimento, novoValorAtual) => {
+  const handleSaveInvestimento = async (
+    ativo,
+    valorInvestimento,
+    novoValorAtual,
+    emergencia = null,
+  ) => {
     if (!ativo || valorInvestimento <= 0) return;
     const {
       data: { user },
@@ -325,13 +489,17 @@ export default function Investimento() {
     const novoInvestido =
       Number(ativo.valor_investido || 0) + valorInvestimento;
 
+    const updatePayload = {
+      valor_investido: novoInvestido,
+      valor_atual: novoValorAtual,
+    };
+    if (emergencia !== null) {
+      updatePayload.emergencia = emergencia;
+    }
     try {
       const { error } = await supabase
         .from("ativos")
-        .update({
-          valor_investido: novoInvestido,
-          valor_atual: novoValorAtual,
-        })
+        .update(updatePayload)
         .eq("id", ativo.id)
         .eq("user_id", user.id);
 
@@ -340,9 +508,14 @@ export default function Investimento() {
       setAtivos((prev) =>
         prev.map((a) =>
           a.id === ativo.id
-            ? { ...a, valor_investido: novoInvestido, valor_atual: novoValorAtual }
-            : a
-        )
+            ? {
+                ...a,
+                valor_investido: novoInvestido,
+                valor_atual: novoValorAtual,
+                ...(emergencia !== null ? { emergencia } : {}),
+              }
+            : a,
+        ),
       );
       setShowModalInvestimento(false);
       setAtivoPreSelecionadoInvestimento(null);
@@ -381,12 +554,14 @@ export default function Investimento() {
         prev.map((a) =>
           a.id === ativoParaRemoverInvestimentos.id
             ? { ...a, valor_investido: 0 }
-            : a
-        )
+            : a,
+        ),
       );
       setShowModalRemoverInvestimentos(false);
       setAtivoParaRemoverInvestimentos(null);
-      setSuccessMessage("Investimentos removidos. O ativo permanece cadastrado.");
+      setSuccessMessage(
+        "Investimentos removidos. O ativo permanece cadastrado.",
+      );
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (e) {
       console.error(e);
@@ -523,7 +698,8 @@ export default function Investimento() {
                 {formatCurrency(lucroPrejuizo)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Valor de mercado − Patrimônio investido (calculado automaticamente)
+                Valor de mercado − Patrimônio investido (calculado
+                automaticamente)
               </p>
               <p
                 className={`text-sm mt-1 ${lucroPrejuizo >= 0 ? "text-emerald-300" : "text-red-300"}`}
@@ -543,6 +719,140 @@ export default function Investimento() {
             </div>
           </div>
 
+          {/* Reserva de emergência */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <BsFillShieldLockFill className="text-indigo-400 text-xl" />
+              <h2 className="text-xl font-bold">Reserva de emergência</h2>
+            </div>
+            <div className="bg-gradient-to-br from-gray-800/40 to-gray-800/30 backdrop-blur-md rounded-xl border border-indigo-500/20 p-6 space-y-4">
+              <div className="flex flex-wrap gap-4 items-center justify-center">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Gasto mensal (R$)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={gastoLocked ? gastoMensalManual : gastoEdit}
+                      onChange={(e) => {
+                        if (gastoLocked) return;
+                        const v = e.target.value.replace(/\D/g, "");
+                        if (v === "") setGastoEdit("");
+                        else {
+                          const n = parseInt(v, 10) / 100;
+                          setGastoEdit(
+                            n.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }),
+                          );
+                        }
+                      }}
+                      disabled={gastoLocked}
+                      className="flex-1 p-2 rounded-lg bg-gray-700/50 text-white border border-gray-600/50 disabled:opacity-70 disabled:cursor-not-allowed"
+                      placeholder={
+                        gastosMediosMensais > 0
+                          ? `Auto: ${formatCurrency(gastosMediosMensais)}`
+                          : "0,00"
+                      }
+                    />
+                    {gastoLocked ? (
+                      <button
+                        type="button"
+                        onClick={handleEditarGasto}
+                        className="px-4 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-600 text-white text-sm whitespace-nowrap"
+                      >
+                        Editar
+                      </button>
+                    ) : (
+                      gastoEditDirty && (
+                        <button
+                          type="button"
+                          onClick={handleSalvarGasto}
+                          className="px-4 py-2 rounded-lg bg-emerald-600/80 hover:bg-emerald-600 text-white text-sm whitespace-nowrap"
+                        >
+                          Salvar
+                        </button>
+                      )
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {gastoLocked
+                      ? "Valor salvo. Clique em Editar para alterar."
+                      : "Deixe vazio para usar a média dos gastos das transações"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-300 whitespace-nowrap">
+                    Meta da reserva
+                  </span>
+                  <select
+                    value={mesesReserva}
+                    onChange={(e) => setMesesReserva(e.target.value)}
+                    className="p-2 rounded-lg bg-gray-700/50 text-white border border-gray-600/50"
+                  >
+                    <option value="6">6 meses</option>
+                    <option value="12">12 meses</option>
+                  </select>
+                </div>
+              </div>
+              {(() => {
+                const gastoEfetivo =
+                  parseGastoNum(gastoMensalManual) > 0
+                    ? parseGastoNum(gastoMensalManual)
+                    : gastosMediosMensais;
+                const meses = parseInt(mesesReserva, 10) || 6;
+                const meta = gastoEfetivo * meses;
+                const temMeta = meta > 0;
+                const pct = temMeta ? (patrimonioEmergencia / meta) * 100 : 0;
+                return (
+                  <>
+                    <p className="text-gray-400 text-sm">
+                      Contabiliza apenas ativos marcados como &quot;Reserva de
+                      emergência&quot; ao cadastrar investimento.
+                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-white">
+                          {formatCurrency(patrimonioEmergencia)}
+                          <span className="text-gray-500 font-normal text-base ml-1">
+                            / {formatCurrency(meta)}
+                          </span>
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {temMeta
+                            ? `Gasto mensal considerado: ${formatCurrency(gastoEfetivo)} × ${meses} meses`
+                            : "Informe o gasto mensal ou cadastre transações de gastos"}
+                        </p>
+                      </div>
+                      {temMeta && (
+                        <div className="flex-1 sm:max-w-xs">
+                          <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-amber-500 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, pct)}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {pct.toFixed(0)}% da meta
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {!temMeta && (
+                      <p className="text-amber-400/80 text-sm">
+                        Informe seu gasto mensal acima ou adicione transações do
+                        tipo &quot;Gasto&quot; na página de Transações.
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
           {/* Ativos cadastrados */}
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4">Ativos cadastrados</h2>
@@ -552,74 +862,93 @@ export default function Investimento() {
                 para começar.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {ativos.map((ativo) => (
-                  <div
-                    key={ativo.id}
-                    className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-white">{ativo.nome}</p>
-                        <span className="text-xs text-gray-400">
-                          {TIPOS_LABEL[ativo.tipo]}
-                        </span>
-                      </div>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => handleOpenInvestimento(ativo)}
-                          className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
-                          title="Cadastrar investimento"
-                        >
-                          <FaPiggyBank className="text-sm" />
-                        </button>
-                        <button
-                          onClick={() => handleEditarAtivo(ativo)}
-                          className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
-                          title="Editar ativo"
-                        >
-                          <FaCog className="text-sm" />
-                        </button>
-                        <button
-                          onClick={() => handleEditarValorMercado(ativo)}
-                          className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 text-indigo-400"
-                          title="Editar valor de mercado"
-                        >
-                          <FaEdit className="text-sm" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenExcluir(ativo)}
-                          className="p-2 rounded-lg bg-gray-700/50 hover:bg-red-600/50 text-red-400"
-                          title="Excluir"
-                        >
-                          <FaTrash className="text-sm" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Tipo</span>
-                        <span className="text-gray-300">
-                          {TIPOS_LABEL[ativo.tipo] || ativo.tipo}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Valor de mercado</span>
-                        <span className="text-white font-medium">
-                          {formatCurrency(ativo.valor_atual)}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleOpenInvestimento(ativo)}
-                      className="mt-3 w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {ativosPaginados.map((ativo) => (
+                    <div
+                      key={ativo.id}
+                      className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-colors"
                     >
-                      <FaPiggyBank className="text-xs" />
-                      Cadastrar investimento
-                    </button>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-white">
+                            {ativo.nome}
+                          </p>
+                          <span className="text-xs text-gray-400">
+                            {TIPOS_LABEL[ativo.tipo]}
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleOpenInvestimento(ativo)}
+                            className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
+                            title="Cadastrar investimento"
+                          >
+                            <FaPiggyBank className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => handleEditarAtivo(ativo)}
+                            className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
+                            title="Editar ativo"
+                          >
+                            <FaCog className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenExcluir(ativo)}
+                            className="p-2 rounded-lg bg-gray-700/50 hover:bg-red-600/50 text-red-400"
+                            title="Excluir"
+                          >
+                            <FaTrash className="text-sm" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">Tipo</span>
+                          <span className="text-gray-300">
+                            {TIPOS_LABEL[ativo.tipo] || ativo.tipo}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleOpenInvestimento(ativo)}
+                        className="mt-3 w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <FaPiggyBank className="text-xs" />
+                        Cadastrar investimento
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {totalPaginasAtivos > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-gray-400">
+                      Página {pageAtivos} de {totalPaginasAtivos} (
+                      {ativos.length} ativos)
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPageAtivos((p) => Math.max(1, p - 1))}
+                        disabled={pageAtivos <= 1}
+                        className="p-2 rounded-lg bg-gray-700/50 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <button
+                        onClick={() =>
+                          setPageAtivos((p) =>
+                            Math.min(totalPaginasAtivos, p + 1),
+                          )
+                        }
+                        disabled={pageAtivos >= totalPaginasAtivos}
+                        className="p-2 rounded-lg bg-gray-700/50 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                      >
+                        <FaChevronRight />
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
 
@@ -653,7 +982,9 @@ export default function Investimento() {
                       <span className="text-white font-semibold">
                         {atual.toFixed(1)}%
                       </span>
-                      <span className="text-gray-500 text-xs">meta {(alvo * 100).toFixed(0)}%</span>
+                      <span className="text-gray-500 text-xs">
+                        meta {(alvo * 100).toFixed(0)}%
+                      </span>
                     </div>
                     <div className="h-2 bg-gray-700 rounded-full mt-2 overflow-hidden">
                       <div
@@ -677,7 +1008,7 @@ export default function Investimento() {
 
           {/* Simulador */}
           <div className="mb-8">
-            <SimuladorJurosCompostos />
+            <SimuladorJurosCompostos patrimonioAtual={patrimonioTotal} />
           </div>
 
           {/* Histórico + filtro */}
@@ -793,116 +1124,183 @@ export default function Investimento() {
                 &quot;Cadastrar investimento&quot; para começar.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {ativosComInvestimento.map((ativo) => {
-                  const valorInvestido = Number(ativo.valor_investido || 0);
-                  const valorAtual = Number(ativo.valor_atual || 0);
-                  const lucro = valorAtual - valorInvestido;
-                  const pct = valorInvestido > 0 ? (lucro / valorInvestido) * 100 : 0;
-                  const estaValorizado = lucro > 0;
-                  const estaDesvalorizado = lucro < 0;
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {investimentosPaginados.map((ativo) => {
+                    const valorInvestido = Number(ativo.valor_investido || 0);
+                    const valorAtual = Number(ativo.valor_atual || 0);
+                    const lucro = valorAtual - valorInvestido;
+                    const pct =
+                      valorInvestido > 0 ? (lucro / valorInvestido) * 100 : 0;
+                    const estaValorizado = lucro > 0;
+                    const estaDesvalorizado = lucro < 0;
 
-                  return (
-                    <div
-                      key={ativo.id}
-                      className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold text-white">
-                            {ativo.nome}
-                          </p>
-                          <span className="text-xs text-gray-400">
-                            {TIPOS_LABEL[ativo.tipo]}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleOpenInvestimento(ativo)}
-                            className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
-                            title="Cadastrar investimento"
-                          >
-                            <FaPiggyBank className="text-sm" />
-                          </button>
-                          <button
-                            onClick={() => handleEditarValorMercado(ativo)}
-                            className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 text-indigo-400"
-                            title="Editar valor de mercado"
-                          >
-                            <FaEdit className="text-sm" />
-                          </button>
-                          <button
-                            onClick={() => handleOpenRemoverInvestimentos(ativo)}
-                            className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
-                            title="Remover investimentos"
-                          >
-                            <FaTrash className="text-sm" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-3 space-y-1 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-400">Status</span>
-                          <span
-                            className={
-                              estaValorizado
-                                ? "text-emerald-400 font-medium"
-                                : estaDesvalorizado
-                                  ? "text-red-400 font-medium"
-                                  : "text-gray-300 font-medium"
-                            }
-                          >
-                            {estaValorizado
-                              ? "Valorizado"
-                              : estaDesvalorizado
-                                ? "Desvalorizado"
-                                : "Neutro"}{" "}
-                            {pct !== 0 && `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Valor na carteira</span>
-                          <span className="text-white font-medium">
-                            {formatCurrency(valorAtual)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Total investido</span>
-                          <span className="text-gray-300">
-                            {formatCurrency(valorInvestido)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Lucro/Prejuízo</span>
-                          <span
-                            className={
-                              lucro >= 0 ? "text-emerald-400" : "text-red-400"
-                            }
-                          >
-                            {lucro >= 0 ? "+" : ""}
-                            {formatCurrency(lucro)} ({pct >= 0 ? "+" : ""}
-                            {pct.toFixed(1)}%)
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleOpenInvestimento(ativo)}
-                        className="mt-3 w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    return (
+                      <div
+                        key={ativo.id}
+                        className="bg-gray-800/40 rounded-xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-colors"
                       >
-                        <FaPiggyBank className="text-xs" />
-                        Cadastrar investimento
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-white">
+                                {ativo.nome}
+                              </p>
+                              {ativo.emergencia && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-600/50 text-amber-300">
+                                  Emergência
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {TIPOS_LABEL[ativo.tipo]}
+                            </span>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleOpenInvestimento(ativo)}
+                              className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-400"
+                              title="Cadastrar investimento"
+                            >
+                              <FaPiggyBank className="text-sm" />
+                            </button>
+                            <button
+                              onClick={() => handleEditarValorMercado(ativo)}
+                              className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600 text-indigo-400"
+                              title="Editar valor na corretora"
+                            >
+                              <FaEdit className="text-sm" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleOpenRemoverInvestimentos(ativo)
+                              }
+                              className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-400"
+                              title="Remover investimentos"
+                            >
+                              <FaTrash className="text-sm" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-1 text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Status</span>
+                            <span
+                              className={
+                                estaValorizado
+                                  ? "text-emerald-400 font-medium"
+                                  : estaDesvalorizado
+                                    ? "text-red-400 font-medium"
+                                    : "text-gray-300 font-medium"
+                              }
+                            >
+                              {estaValorizado
+                                ? "Valorizado"
+                                : estaDesvalorizado
+                                  ? "Desvalorizado"
+                                  : "Neutro"}{" "}
+                              {pct !== 0 &&
+                                `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`}
+                            </span>
+                          </div>
+                          {patrimonioTotal > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">
+                                % do patrimônio
+                              </span>
+                              <span className="text-indigo-300">
+                                {((valorAtual / patrimonioTotal) * 100).toFixed(
+                                  1,
+                                )}
+                                %
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">
+                              Valor na carteira
+                            </span>
+                            <span className="text-white font-medium">
+                              {formatCurrency(valorAtual)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">
+                              Total investido
+                            </span>
+                            <span className="text-gray-300">
+                              {formatCurrency(valorInvestido)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">
+                              Lucro/Prejuízo
+                            </span>
+                            <span
+                              className={
+                                lucro >= 0 ? "text-emerald-400" : "text-red-400"
+                              }
+                            >
+                              {lucro >= 0 ? "+" : ""}
+                              {formatCurrency(lucro)} ({pct >= 0 ? "+" : ""}
+                              {pct.toFixed(1)}%)
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleOpenInvestimento(ativo)}
+                          className="mt-3 w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                        >
+                          <FaPiggyBank className="text-xs" />
+                          Cadastrar investimento
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                {totalPaginasInvestimentos > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-gray-400">
+                      Página {pageInvestimentos} de {totalPaginasInvestimentos}{" "}
+                      ({ativosComInvestimento.length} investimentos)
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          setPageInvestimentos((p) => Math.max(1, p - 1))
+                        }
+                        disabled={pageInvestimentos <= 1}
+                        className="p-2 rounded-lg bg-gray-700/50 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <button
+                        onClick={() =>
+                          setPageInvestimentos((p) =>
+                            Math.min(totalPaginasInvestimentos, p + 1),
+                          )
+                        }
+                        disabled={
+                          pageInvestimentos >= totalPaginasInvestimentos
+                        }
+                        className="p-2 rounded-lg bg-gray-700/50 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                      >
+                        <FaChevronRight />
                       </button>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
 
       {showModalAtivo && (
-        <ModalAtivo onClose={() => setShowModalAtivo(false)} onSave={handleSaveAtivo} />
+        <ModalAtivo
+          onClose={() => setShowModalAtivo(false)}
+          onSave={handleSaveAtivo}
+        />
       )}
 
       {showModalInvestimento && (

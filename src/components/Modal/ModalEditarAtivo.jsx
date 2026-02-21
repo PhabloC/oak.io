@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 
 const TIPOS_ATIVO = [
@@ -21,6 +21,11 @@ export default function ModalEditarAtivo({ ativo, onClose, onSave }) {
   }, [ativo?.tipo]);
   
   const [tipo, setTipo] = useState(tipoInicial);
+  const [emergencia, setEmergencia] = useState(ativo?.emergencia === true);
+
+  useEffect(() => {
+    setEmergencia(ativo?.emergencia === true);
+  }, [ativo?.emergencia]);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -32,6 +37,7 @@ export default function ModalEditarAtivo({ ativo, onClose, onSave }) {
       nome: nome.trim(),
       ticker: ticker.trim() || null,
       tipo,
+      emergencia,
     });
     onClose();
   };
@@ -92,6 +98,19 @@ export default function ModalEditarAtivo({ ativo, onClose, onSave }) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="emergencia-edit"
+              checked={emergencia}
+              onChange={(e) => setEmergencia(e.target.checked)}
+              className="rounded border-gray-600 bg-gray-700 text-amber-500 focus:ring-amber-500"
+            />
+            <label htmlFor="emergencia-edit" className="text-sm text-gray-300 cursor-pointer">
+              Contabilizar na reserva de emergência
+            </label>
           </div>
 
           <div className="flex gap-3 justify-end mt-6">

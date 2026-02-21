@@ -37,7 +37,7 @@ export default function ModalEditarValorMercado({ ativo, onClose, onSave }) {
     e.preventDefault();
     const v = parseCurrencyToNumber(valorMercado);
     if (v <= 0) {
-      alert("Valor de mercado deve ser maior que zero.");
+      alert("Valor na corretora deve ser maior que zero.");
       return;
     }
     onSave(v);
@@ -50,7 +50,7 @@ export default function ModalEditarValorMercado({ ativo, onClose, onSave }) {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-2 animate-fadeIn">
       <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-6 rounded-xl shadow-2xl w-full max-w-md border border-gray-700/50">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Editar valor de mercado</h2>
+          <h2 className="text-xl font-bold text-white">Editar valor na corretora</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             <IoClose className="text-2xl" />
           </button>
@@ -69,7 +69,7 @@ export default function ModalEditarValorMercado({ ativo, onClose, onSave }) {
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-indigo-200">
-              Novo valor de mercado (R$)
+              Novo valor na corretora (R$)
             </label>
             <div className="flex items-center">
               <span className="bg-gray-700 text-white p-3 rounded-l-xl border border-gray-600/50 font-semibold">
