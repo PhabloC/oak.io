@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
+import { FaArrowTrendUp, FaArrowTrendDown, FaShieldHalved } from "react-icons/fa6";
 
 const formatCurrency = (v) =>
   new Intl.NumberFormat("pt-BR", {
@@ -180,18 +180,50 @@ export default function ModalInvestimento({ ativos = [], ativoPreSelecionado = n
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="emergencia"
-              checked={emergencia}
-              onChange={(e) => setEmergencia(e.target.checked)}
-              className="rounded border-gray-600 bg-gray-700 text-amber-500 focus:ring-amber-500"
-            />
-            <label htmlFor="emergencia" className="text-sm text-gray-300 cursor-pointer">
-              Contabilizar na reserva de emergência
-            </label>
-          </div>
+          <label
+            htmlFor="emergencia"
+            className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all duration-200 hover:border-amber-500/50 ${
+              emergencia
+                ? "bg-amber-500/10 border-amber-500/50 shadow-sm shadow-amber-500/10"
+                : "bg-gray-700/30 border-gray-600/50 hover:bg-gray-700/50"
+            }`}
+          >
+            <div
+              className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                emergencia ? "bg-amber-500/20 text-amber-400" : "bg-gray-600/50 text-gray-400"
+              }`}
+            >
+              <FaShieldHalved className="text-lg" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white">
+                Contabilizar na reserva de emergência
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Este ativo será incluído no cálculo da sua reserva
+              </p>
+            </div>
+            <div className="relative flex-shrink-0">
+              <input
+                type="checkbox"
+                id="emergencia"
+                checked={emergencia}
+                onChange={(e) => setEmergencia(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                  emergencia ? "bg-amber-500" : "bg-gray-600"
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-all duration-200 ease-out ${
+                    emergencia ? "left-6" : "left-1"
+                  }`}
+                />
+              </div>
+            </div>
+          </label>
 
           {temDados && (
             <div className={`p-4 rounded-xl border ${

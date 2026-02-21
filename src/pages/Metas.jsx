@@ -480,6 +480,59 @@ export default function Metas() {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
+  /**
+   * Calcula quantos meses restam até a data de vencimento.
+   * Retorna 0 se o prazo já passou ou não há deadline.
+   */
+  const getMesesRestantes = (deadline) => {
+    if (!deadline) return null;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const prazo = new Date(deadline);
+    prazo.setHours(0, 0, 0, 0);
+    if (prazo <= hoje) return 0;
+    const diffMs = prazo - hoje;
+    const diffMeses = Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 30.44));
+    return Math.max(1, diffMeses);
+  };
+
+  /**
+   * Calcula quanto guardar por mês para atingir a meta no prazo.
+   * Retorna null se não há deadline ou prazo já venceu.
+   */
+  const getPoupancaMensalNecessaria = (meta) => {
+    const meses = getMesesRestantes(meta.deadline);
+    if (meses === null || meses <= 0) return null;
+    const valorFaltante = Math.max(0, meta.target_value - meta.current_value);
+    if (valorFaltante <= 0) return 0;
+    return valorFaltante / meses;
+  };
+
+  /**
+   * Avalia a viabilidade do objetivo com base no valor mensal necessário.
+   * Considera viável até R$ 2.000/mês, atenção até R$ 5.000, desafiador acima.
+   */
+  const getViabilidade = (meta) => {
+    if (!meta.deadline) {
+      return { status: "sem_prazo", label: "Sem prazo definido", cor: "text-gray-400", bg: "bg-gray-600/20" };
+    }
+    const meses = getMesesRestantes(meta.deadline);
+    if (meses === 0) {
+      return { status: "prazo_vencido", label: "Prazo vencido", cor: "text-red-400", bg: "bg-red-600/20" };
+    }
+    const poupancaMensal = getPoupancaMensalNecessaria(meta);
+    if (poupancaMensal === null || poupancaMensal <= 0) {
+      return { status: "meta_atingida", label: "Meta alcançada!", cor: "text-emerald-400", bg: "bg-emerald-600/20" };
+    }
+    if (poupancaMensal <= 2000) {
+      return { status: "viavel", label: "Objetivo viável", cor: "text-emerald-400", bg: "bg-emerald-600/20" };
+    }
+    if (poupancaMensal <= 5000) {
+      return { status: "atencao", label: "Exige comprometimento", cor: "text-amber-400", bg: "bg-amber-600/20" };
+    }
+    return { status: "desafiadora", label: "Meta desafiadora", cor: "text-orange-400", bg: "bg-orange-600/20" };
+  };
+
   const metasEmAndamento = useMemo(
     () => metas.filter((m) => !m.completed),
     [metas]
@@ -650,13 +703,48 @@ export default function Metas() {
                     <div className="mb-4">
                       <div className="flex justify-between text-sm text-gray-400 mb-2">
                         <span>Progresso</span>
-                        <span>{progress.toFixed(1)}%</span>
+                        <span>
+                          {progress.toFixed(1)}%
+                          {progress >= 100 && (
+                            <span className="text-emerald-400 font-medium ml-1">· Meta alcançada!</span>
+                          )}
+                        </span>
                       </div>
-                      <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full bg-gradient-to-r ${progressColor} transition-all duration-500`}
-                          style={{ width: `${progress}%` }}
-                        />
+                      <div className="relative">
+                        <div className="h-3 bg-gray-700 rounded-full overflow-visible">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r transition-all duration-500 ${
+                              progress >= 100 ? "from-emerald-500 to-emerald-600" : progressColor
+                            }`}
+                            style={{ width: `${Math.min(100, progress)}%` }}
+                          />
+                        </div>
+                        {progress >= 100 && (
+                          <div className="absolute inset-0 pointer-events-none overflow-visible">
+                            {[
+                              { x: "-6px", y: "-24px", delay: "0s", color: "bg-amber-400" },
+                              { x: "4px", y: "-28px", delay: "0.2s", color: "bg-emerald-400" },
+                              { x: "-12px", y: "-20px", delay: "0.4s", color: "bg-yellow-300" },
+                              { x: "8px", y: "-22px", delay: "0.1s", color: "bg-amber-300" },
+                              { x: "-2px", y: "-26px", delay: "0.3s", color: "bg-emerald-300" },
+                              { x: "6px", y: "-18px", delay: "0.5s", color: "bg-amber-500" },
+                              { x: "-8px", y: "-30px", delay: "0.15s", color: "bg-emerald-500" },
+                              { x: "2px", y: "-16px", delay: "0.35s", color: "bg-yellow-400" },
+                              { x: "-4px", y: "-22px", delay: "0.45s", color: "bg-amber-400" },
+                              { x: "10px", y: "-26px", delay: "0.25s", color: "bg-emerald-400" },
+                            ].map((p, i) => (
+                              <div
+                                key={i}
+                                className={`absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-sm ${p.color} animate-confetti-bar`}
+                                style={{
+                                  "--cf-x": p.x,
+                                  "--cf-y": p.y,
+                                  animationDelay: p.delay,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -687,6 +775,28 @@ export default function Metas() {
                           )}
                         </span>
                       </div>
+                      {!meta.completed && meta.deadline && (() => {
+                        const poupancaMensal = getPoupancaMensalNecessaria(meta);
+                        const meses = getMesesRestantes(meta.deadline);
+                        const viabilidade = getViabilidade(meta);
+                        return (
+                          <>
+                            {meses !== null && meses > 0 && meta.target_value > meta.current_value && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-400">Guardar/mês:</span>
+                                <span className="font-semibold text-indigo-300">
+                                  {formatCurrency(poupancaMensal)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${viabilidade.bg} ${viabilidade.cor}`}>
+                                {viabilidade.label}
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {meta.completed && meta.completed_at && (
@@ -823,6 +933,40 @@ export default function Metas() {
                   }
                   className="w-full p-3 rounded-xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 outline-none cursor-pointer"
                 />
+                {formData.deadline && formData.targetValue && (() => {
+                  const target = parseCurrencyToNumber(formData.targetValue);
+                  const current = parseCurrencyToNumber(formData.currentValue) || 0;
+                  if (target <= 0) return null;
+                  const hoje = new Date();
+                  hoje.setHours(0, 0, 0, 0);
+                  const prazo = new Date(formData.deadline);
+                  prazo.setHours(0, 0, 0, 0);
+                  const meses = prazo <= hoje ? 0 : Math.max(1, Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24 * 30.44)));
+                  const faltante = Math.max(0, target - current);
+                  const poupancaMensal = meses > 0 ? faltante / meses : null;
+                  const viab = !formData.deadline ? { label: "Sem prazo", cor: "text-gray-400", bg: "bg-gray-600/20" }
+                    : meses === 0 ? { label: "Prazo vencido", cor: "text-red-400", bg: "bg-red-600/20" }
+                    : faltante <= 0 ? { label: "Meta já atingida", cor: "text-emerald-400", bg: "bg-emerald-600/20" }
+                    : poupancaMensal <= 2000 ? { label: "Objetivo viável", cor: "text-emerald-400", bg: "bg-emerald-600/20" }
+                    : poupancaMensal <= 5000 ? { label: "Exige comprometimento", cor: "text-amber-400", bg: "bg-amber-600/20" }
+                    : { label: "Meta desafiadora", cor: "text-orange-400", bg: "bg-orange-600/20" };
+                  return (
+                    <div className="mt-3 p-3 rounded-lg bg-gray-700/30 space-y-1">
+                      {meses > 0 && faltante > 0 && (
+                        <p className="text-sm text-gray-300">
+                          <span className="text-gray-400">Guardar por mês: </span>
+                          <span className="font-semibold text-indigo-300">
+                            {formatCurrency(poupancaMensal)}
+                          </span>
+                          <span className="text-gray-500 text-xs ml-1">({meses} meses restantes)</span>
+                        </p>
+                      )}
+                      <span className={`inline-block text-xs font-medium px-2 py-1 rounded-full ${viab.bg} ${viab.cor}`}>
+                        {viab.label}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="lg:col-span-2">

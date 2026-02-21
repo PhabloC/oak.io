@@ -829,14 +829,47 @@ export default function Investimento() {
                       </div>
                       {temMeta && (
                         <div className="flex-1 sm:max-w-xs">
-                          <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-amber-500 rounded-full transition-all"
-                              style={{ width: `${Math.min(100, pct)}%` }}
-                            />
+                          <div className="relative">
+                            <div className="h-4 bg-gray-700 rounded-full overflow-visible">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  pct >= 100 ? "bg-emerald-500" : "bg-amber-500"
+                                }`}
+                                style={{ width: `${Math.min(100, pct)}%` }}
+                              />
+                            </div>
+                            {pct >= 100 && (
+                              <div className="absolute inset-0 pointer-events-none overflow-visible">
+                                {[
+                                  { x: "-6px", y: "-28px", delay: "0s", color: "bg-amber-400" },
+                                  { x: "4px", y: "-32px", delay: "0.2s", color: "bg-emerald-400" },
+                                  { x: "-12px", y: "-24px", delay: "0.4s", color: "bg-yellow-300" },
+                                  { x: "8px", y: "-26px", delay: "0.1s", color: "bg-amber-300" },
+                                  { x: "-2px", y: "-30px", delay: "0.3s", color: "bg-emerald-300" },
+                                  { x: "6px", y: "-22px", delay: "0.5s", color: "bg-amber-500" },
+                                  { x: "-8px", y: "-34px", delay: "0.15s", color: "bg-emerald-500" },
+                                  { x: "2px", y: "-20px", delay: "0.35s", color: "bg-yellow-400" },
+                                  { x: "-4px", y: "-26px", delay: "0.45s", color: "bg-amber-400" },
+                                  { x: "10px", y: "-30px", delay: "0.25s", color: "bg-emerald-400" },
+                                ].map((p, i) => (
+                                  <div
+                                    key={i}
+                                    className={`absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-sm ${p.color} animate-confetti-bar`}
+                                    style={{
+                                      "--cf-x": p.x,
+                                      "--cf-y": p.y,
+                                      animationDelay: p.delay,
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs text-gray-400 mt-1">
                             {pct.toFixed(0)}% da meta
+                            {pct >= 100 && (
+                              <span className="text-emerald-400 font-medium ml-1">· Meta alcançada!</span>
+                            )}
                           </p>
                         </div>
                       )}
