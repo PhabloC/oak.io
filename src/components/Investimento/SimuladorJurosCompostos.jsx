@@ -111,7 +111,7 @@ export default function SimuladorJurosCompostos({ patrimonioAtual = 0 }) {
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Valor inicial (R$)
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={valorInicial}
@@ -123,7 +123,7 @@ export default function SimuladorJurosCompostos({ patrimonioAtual = 0 }) {
                 <button
                   type="button"
                   onClick={() => setValorInicial(formatValorInicial(patrimonioAtual))}
-                  className="px-3 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-sm whitespace-nowrap"
+                  className="px-3 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-sm whitespace-nowrap sm:shrink-0"
                 >
                   Usar patrimônio atual
                 </button>

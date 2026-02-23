@@ -9,6 +9,7 @@ import { supabase } from "../../supabaseClient";
 import { MdInsertChart } from "react-icons/md";
 import { TfiTarget } from "react-icons/tfi";
 import { AiFillDollarCircle } from "react-icons/ai";
+import { IoPersonCircle } from "react-icons/io5";
 
 export default function Sidebar({ isMobileOpen, onClose }) {
   const location = useLocation();
@@ -246,6 +247,36 @@ export default function Sidebar({ isMobileOpen, onClose }) {
               Investimento
             </span>
             {location.pathname === "/investimento" && (
+              <div className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+            )}
+          </Link>
+
+          <Link
+            to="/perfil"
+            onClick={handleLinkClick}
+            className={`flex items-center px-4 py-3 rounded-xl w-full transition-all duration-200 ${
+              location.pathname === "/perfil"
+                ? "bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg shadow-purple-500/30 scale-[1.02]"
+                : "hover:bg-indigo-800/50 hover:scale-[1.01]"
+            } group relative overflow-hidden ${isMobile ? "sidebar-content-item" : ""}`}
+          >
+            <IoPersonCircle
+              className={`text-2xl transition-all duration-200 ${
+                location.pathname === "/perfil"
+                  ? "text-white"
+                  : "text-indigo-300"
+              } ${isMobile || isExpanded ? "mr-3" : "mx-auto"}`}
+            />
+            <span
+              className={`text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+                isMobile || isExpanded
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-4 w-0 overflow-hidden"
+              }`}
+            >
+              Perfil
+            </span>
+            {location.pathname === "/perfil" && (
               <div className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
             )}
           </Link>
