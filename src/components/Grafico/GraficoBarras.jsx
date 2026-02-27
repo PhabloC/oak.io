@@ -11,7 +11,7 @@ import {
   CartesianGrid,
   XAxis,
 } from "recharts";
-import { FiTrendingDown, FiTrendingUp } from "react-icons/fi";
+import { FiDollarSign, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 import {
   Card,
   CardContent,
@@ -59,6 +59,11 @@ const chartConfig = {
     color: "#ef4444",
     icon: FiTrendingDown,
   },
+  investimento: {
+    label: "Investimento",
+    color: "#3b82f6",
+    icon: FiDollarSign,
+  },
 };
 
 const formatCurrency = (value) =>
@@ -94,10 +99,15 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
               .filter((t) => t.type === "Gasto")
               .reduce((acc, t) => acc + Math.abs(t.value), 0);
 
+            const investimento = dayTransactions
+              .filter((t) => t.type === "Investimento")
+              .reduce((acc, t) => acc + Math.abs(t.value), 0);
+
             return {
               month: day,
               receita,
               despesa,
+              investimento,
             };
           });
         })()
@@ -111,10 +121,14 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
           const despesa = monthTransactions
             .filter((t) => t.type === "Gasto")
             .reduce((acc, t) => acc + Math.abs(t.value), 0);
+          const investimento = monthTransactions
+            .filter((t) => t.type === "Investimento")
+            .reduce((acc, t) => acc + Math.abs(t.value), 0);
           return {
             month: month.substring(0, 3),
             receita,
             despesa,
+            investimento,
           };
         });
 
@@ -208,6 +222,7 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
               accessibilityLayer
               data={chartData}
               margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+              barCategoryGap="25%"
             >
               <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis
@@ -236,6 +251,12 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
               <Bar
                 dataKey="despesa"
                 fill="var(--color-despesa)"
+                radius={[0, 0, 0, 0]}
+                stackId="a"
+              />
+              <Bar
+                dataKey="investimento"
+                fill="var(--color-investimento)"
                 radius={[4, 4, 0, 0]}
                 stackId="a"
               />
@@ -277,6 +298,13 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
                 dataKey="despesa"
                 type="monotone"
                 stroke="var(--color-despesa)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                dataKey="investimento"
+                type="monotone"
+                stroke="var(--color-investimento)"
                 strokeWidth={2}
                 dot={false}
               />
@@ -323,6 +351,14 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
                 fillOpacity={0.4}
                 stackId="a"
                 stroke="var(--color-receita)"
+                type="natural"
+              />
+              <Area
+                dataKey="investimento"
+                fill="var(--color-investimento)"
+                fillOpacity={0.4}
+                stackId="a"
+                stroke="var(--color-investimento)"
                 type="natural"
               />
               <ChartLegend content={<ChartLegendContent />} />
