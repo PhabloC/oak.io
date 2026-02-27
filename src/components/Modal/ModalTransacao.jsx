@@ -169,6 +169,7 @@ export default function ModalTransacao({ onClose, onSave }) {
             >
               <option value="Ganho">Ganho</option>
               <option value="Gasto">Gasto</option>
+              <option value="Investimento">Investimento</option>
             </select>
           </div>
           <div>

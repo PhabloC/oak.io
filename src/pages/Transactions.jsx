@@ -511,6 +511,7 @@ export default function Transactions() {
                   <option value="Ganho">Ganho</option>
                   <option value="Gasto">Gasto</option>
                   <option value="Investimento">Investimento</option>
+                  <option value="Investimento">Investimento</option>
                 </select>
               </div>
 
