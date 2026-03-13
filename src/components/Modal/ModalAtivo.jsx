@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { IoClose } from "react-icons/io5";
+import { formatDateForInput } from "../../utils/date";
 
 const TIPOS_ATIVO = [
   { value: "acoes", label: "Ações" },
@@ -58,7 +59,7 @@ export default function ModalAtivo({ onClose, onSave }) {
       valor_atual: tipo === "tesouro_selic" ? 0 : vMercado,
       valor_investido: 0,
       quantidade: 1,
-      data_compra: new Date().toISOString().split("T")[0],
+      data_compra: formatDateForInput(),
       taxa_selic_anual: taxaSelic,
     });
     onClose();

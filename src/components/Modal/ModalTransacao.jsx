@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DEFAULT_CATEGORIES } from "../../utils/categories";
 import { IoClose } from "react-icons/io5";
 import { sanitizeText, sanitizeNumber, validateTransactionForm } from "../../utils/sanitize";
+import { formatDateForInput } from "../../utils/date";
 
 export default function ModalTransacao({ onClose, onSave }) {
   // Estados locais para os campos do formulário
@@ -9,7 +10,7 @@ export default function ModalTransacao({ onClose, onSave }) {
   const [value, setValue] = useState("");
   const [type, setType] = useState("Ganho");
   const [method, setMethod] = useState("Boleto");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => formatDateForInput());
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
 
