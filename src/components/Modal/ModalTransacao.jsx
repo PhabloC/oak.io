@@ -13,6 +13,7 @@ export default function ModalTransacao({ onClose, onSave }) {
   const [date, setDate] = useState(() => formatDateForInput());
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [todosMeses, setTodosMeses] = useState(false);
 
   // Resetar categoria quando o tipo mudar
   const handleTypeChange = (newType) => {
@@ -82,6 +83,7 @@ export default function ModalTransacao({ onClose, onSave }) {
       month: monthFromDate,
       category: category || null,
       description: cleanDescription || null,
+      todos_meses: todosMeses,
     };
 
     try {
@@ -203,6 +205,21 @@ export default function ModalTransacao({ onClose, onSave }) {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="lg:col-span-2 flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-gray-700/30 p-4">
+            <input
+              id="todos-meses"
+              type="checkbox"
+              checked={todosMeses}
+              onChange={(e) => setTodosMeses(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-gray-500 text-purple-600 focus:ring-purple-500"
+            />
+            <label htmlFor="todos-meses" className="cursor-pointer text-sm text-gray-200 leading-relaxed">
+              <span className="font-medium text-indigo-200">Usar em todos os meses</span>
+              <span className="block text-gray-400 mt-1 text-xs">
+                A transação aparece em Janeiro a Dezembro do ano da data (mesmo valor). Útil para assinaturas e gastos fixos.
+              </span>
+            </label>
           </div>
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-2 text-indigo-200">

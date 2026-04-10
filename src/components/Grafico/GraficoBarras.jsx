@@ -27,6 +27,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { transactionMatchesMonth } from "@/utils/transactions";
 
 const months = [
   "Janeiro",
@@ -85,11 +86,12 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
           const daysInMonth = getDaysInMonth(selectedMonth, year);
           return Array.from({ length: daysInMonth }, (_, i) => {
             const day = (i + 1).toString();
-            const dayTransactions = transactions.filter(
-              (t) =>
-                t.month === selectedMonth &&
-                t.date?.endsWith(`-${day.padStart(2, "0")}`),
-            );
+            const daySuffix = `-${day.padStart(2, "0")}`;
+            const dayTransactions = transactions.filter((t) => {
+              if (!t.date?.endsWith(daySuffix)) return false;
+              if (t.todos_meses) return true;
+              return t.month === selectedMonth;
+            });
 
             const receita = dayTransactions
               .filter((t) => t.type === "Ganho")
@@ -112,8 +114,8 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
           });
         })()
       : months.map((month) => {
-          const monthTransactions = transactions.filter(
-            (t) => t.month === month,
+          const monthTransactions = transactions.filter((t) =>
+            transactionMatchesMonth(t, month),
           );
           const receita = monthTransactions
             .filter((t) => t.type === "Ganho")

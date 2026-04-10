@@ -16,6 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { transactionMatchesMonth } from "@/utils/transactions";
 
 const chartConfig = {
   value: {
@@ -51,7 +52,7 @@ export default function GraficoPizza({
   const year = selectedYear || new Date().getFullYear();
 
   const chartData = useMemo(() => {
-    const filterByMonth = (t) => t.month === selectedMonth;
+    const filterByMonth = (t) => transactionMatchesMonth(t, selectedMonth);
 
     const ganhos = transactions
       .filter((t) => t.type === "Ganho" && (viewMode === "all" || filterByMonth(t)))

@@ -101,6 +101,11 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
                   {transaction.category}
                 </span>
               )}
+              {transaction.todos_meses && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  Todo mês
+                </span>
+              )}
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold border ${
                   transaction.paga
@@ -183,8 +188,13 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm lg:text-base font-medium text-white group-hover:text-indigo-200 transition-colors">
-                    {transaction.title}
+                  <div className="text-sm lg:text-base font-medium text-white group-hover:text-indigo-200 transition-colors flex flex-wrap items-center gap-2">
+                    <span>{transaction.title}</span>
+                    {transaction.todos_meses && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] lg:text-xs font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                        Todo mês
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap">

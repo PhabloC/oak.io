@@ -184,18 +184,36 @@ export default function Investimento() {
     const endDate = dataFim.toISOString().slice(0, 10);
     const { data, error } = await supabase
       .from("transactions")
-      .select("date, type, value")
+      .select("date, type, value, todos_meses")
       .eq("user_id", userId)
       .eq("type", "Gasto")
       .gte("date", startDate)
       .lte("date", endDate);
     if (error) return;
+
+    const monthKeys = [];
+    const cursor = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), 1);
+    const end = new Date(dataFim.getFullYear(), dataFim.getMonth(), 1);
+    while (cursor <= end) {
+      const y = cursor.getFullYear();
+      const m = String(cursor.getMonth() + 1).padStart(2, "0");
+      monthKeys.push(`${y}-${m}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
     const porMes = {};
     (data || []).forEach((t) => {
-      const [y, m] = (t.date || "").split("-");
-      const key = `${y}-${m}`;
-      if (!porMes[key]) porMes[key] = 0;
-      porMes[key] += Math.abs(Number(t.value) || 0);
+      const absVal = Math.abs(Number(t.value) || 0);
+      if (t.todos_meses) {
+        monthKeys.forEach((key) => {
+          porMes[key] = (porMes[key] || 0) + absVal;
+        });
+      } else {
+        const [y, m] = (t.date || "").split("-");
+        const key = `${y}-${m}`;
+        if (!porMes[key]) porMes[key] = 0;
+        porMes[key] += absVal;
+      }
     });
     const mesesComDados = Object.keys(porMes);
     const total = mesesComDados.reduce((s, k) => s + porMes[k], 0);

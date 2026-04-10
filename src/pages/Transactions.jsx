@@ -12,6 +12,7 @@ import { useTransactions } from "../context/TransactionsContext";
 import { useYear } from "../context/YearContext";
 import TransactionsTable from "../components/Table/TransactionsTable";
 import { getAllCategories } from "../utils/categories";
+import { applyMonthOrRecurringFilter } from "../utils/transactions";
 import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 
 export default function Transactions() {
@@ -111,11 +112,12 @@ export default function Transactions() {
       const startDate = `${year}-01-01`;
       const endDate = `${year}-12-31`;
 
-      const { data, error } = await supabase
+      let txQuery = supabase
         .from("transactions")
         .select("*")
-        .eq("user_id", user.id)
-        .eq("month", month)
+        .eq("user_id", user.id);
+      txQuery = applyMonthOrRecurringFilter(txQuery, month);
+      const { data, error } = await txQuery
         .gte("date", startDate)
         .lte("date", endDate)
         .order("date", { ascending: true });
@@ -126,6 +128,7 @@ export default function Transactions() {
       }
 
       const loadedTransactions = (data || []).map((row) => {
+        if (row.todos_meses) return row;
         const dateMonth = getMonthName(row.date);
         const capitalizedDateMonth =
           dateMonth.charAt(0).toUpperCase() + dateMonth.slice(1);

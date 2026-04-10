@@ -1,13 +1,14 @@
 import { useTransactions } from "../../context/TransactionsContext";
 import { useNavigate } from "react-router-dom";
+import { transactionMatchesMonth } from "../../utils/transactions";
 
 export default function Quadro({ selectedMonth }) {
   const { transactions } = useTransactions();
   const navigate = useNavigate(); // Hook para navegação
 
   // Filtra as transações com base no mês selecionado
-  const filteredTransactions = transactions.filter(
-    (transaction) => transaction.month === selectedMonth
+  const filteredTransactions = transactions.filter((transaction) =>
+    transactionMatchesMonth(transaction, selectedMonth)
   );
 
   return (
