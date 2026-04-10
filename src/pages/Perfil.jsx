@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
@@ -170,7 +170,7 @@ export default function Perfil() {
         .order("created_at", { ascending: true }),
       supabase
         .from("transactions")
-        .select("id, date, type, value")
+        .select("id, date, type, value, todos_meses")
         .eq("user_id", user.id)
         .order("date", { ascending: true }),
     ]);
