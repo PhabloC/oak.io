@@ -11,6 +11,10 @@ import { useTransactions } from "../context/TransactionsContext";
 import { useYear } from "../context/YearContext";
 import GraficoBarras from "../components/Grafico/GraficoBarras";
 import GraficoPizza from "../components/Grafico/GraficoPizza";
+import {
+  applyMonthOrRecurringFilter,
+  transactionMatchesMonth,
+} from "../utils/transactions";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -79,11 +83,12 @@ export default function Dashboard() {
       const startDate = `${year}-01-01`;
       const endDate = `${year}-12-31`;
 
-      const { data, error } = await supabase
+      let txQuery = supabase
         .from("transactions")
         .select("*")
-        .eq("user_id", user.id)
-        .eq("month", month)
+        .eq("user_id", user.id);
+      txQuery = applyMonthOrRecurringFilter(txQuery, month);
+      const { data, error } = await txQuery
         .gte("date", startDate)
         .lte("date", endDate)
         .order("date", { ascending: true });
@@ -102,7 +107,9 @@ export default function Dashboard() {
   // Função para calcular os dados do Dashboard
   const calculateDashboardData = (transactions, month) => {
     // Filtra transações pelo mês selecionado
-    const filteredTransactions = transactions.filter((t) => t.month === month);
+    const filteredTransactions = transactions.filter((t) =>
+      transactionMatchesMonth(t, month)
+    );
 
     const receita = filteredTransactions
       .filter((t) => t.type === "Ganho")
