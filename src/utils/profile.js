@@ -1,4 +1,4 @@
-﻿export const formatDateTime = (dateStr) => {
+export const formatDateTime = (dateStr) => {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "—";
@@ -47,11 +47,26 @@ export const getMaxConsecutivePositiveMonths = (transactions) => {
   const monthlyBalance = new Map();
 
   (transactions || []).forEach((tx) => {
+    const amount = Math.abs(Number(tx.value) || 0);
+
+    if (tx.todos_meses) {
+      const [yearStr] = (tx.date || "").split("-");
+      const year = parseInt(yearStr, 10);
+      if (!year) return;
+      for (let m = 1; m <= 12; m++) {
+        const key = `${year}-${String(m).padStart(2, "0")}`;
+        const current = monthlyBalance.get(key) || { receita: 0, despesa: 0 };
+        if (tx.type === "Ganho") current.receita += amount;
+        if (tx.type === "Gasto") current.despesa += amount;
+        monthlyBalance.set(key, current);
+      }
+      return;
+    }
+
     const key = getMonthKey(tx.date);
     if (!key) return;
 
     const current = monthlyBalance.get(key) || { receita: 0, despesa: 0 };
-    const amount = Math.abs(Number(tx.value) || 0);
 
     if (tx.type === "Ganho") current.receita += amount;
     if (tx.type === "Gasto") current.despesa += amount;
