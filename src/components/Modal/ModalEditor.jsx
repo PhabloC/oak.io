@@ -64,6 +64,7 @@ export default function ModalEditor({
   const [date, setDate] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [todosMeses, setTodosMeses] = useState(false);
 
   // Inicializa os estados com os valores da transação
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function ModalEditor({
       setDate(transaction.date || "");
       setCategory(transaction.category || "");
       setDescription(transaction.description || "");
+      setTodosMeses(Boolean(transaction.todos_meses));
     }
   }, [transaction]);
 
@@ -111,6 +113,7 @@ export default function ModalEditor({
       month: capitalizedMonth,
       category: category || null,
       description: description || null,
+      todos_meses: todosMeses,
     };
 
     await editTransaction(transaction.id, updatedTransaction);
@@ -232,6 +235,21 @@ export default function ModalEditor({
                 </option>
               ))}
             </select>
+          </div>
+          <div className="lg:col-span-2 flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-gray-700/30 p-4">
+            <input
+              id="edit-todos-meses"
+              type="checkbox"
+              checked={todosMeses}
+              onChange={(e) => setTodosMeses(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-gray-500 text-purple-600 focus:ring-purple-500"
+            />
+            <label htmlFor="edit-todos-meses" className="cursor-pointer text-sm text-gray-200 leading-relaxed">
+              <span className="font-medium text-indigo-200">Usar em todos os meses</span>
+              <span className="block text-gray-400 mt-1 text-xs">
+                Conta em todos os meses do ano da data (mesmo valor).
+              </span>
+            </label>
           </div>
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium mb-2 text-indigo-200">
