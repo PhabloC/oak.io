@@ -1,4 +1,4 @@
-﻿import { IoPersonCircle } from "react-icons/io5";
+import { IoPersonCircle } from "react-icons/io5";
 
 export default function ProfileHero({
   userName,
@@ -9,8 +9,6 @@ export default function ProfileHero({
   onSaveProfile,
   savingProfile,
   saveMessage,
-  unlockedAchievements,
-  totalAchievements,
   patrimonioTotal,
 }) {
   return (
@@ -35,9 +33,6 @@ export default function ProfileHero({
             <h1 className="text-2xl font-bold text-indigo-50 sm:text-3xl">{userName}</h1>
             <p className="mt-1 text-sm text-indigo-200/90">{userEmail}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-amber-400/30 bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-100">
-                {unlockedAchievements}/{totalAchievements} conquistas
-              </span>
               <span className="rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-100">
                 Patrimônio: {patrimonioTotal}
               </span>
@@ -91,4 +86,3 @@ export default function ProfileHero({
     </section>
   );
 }
-
