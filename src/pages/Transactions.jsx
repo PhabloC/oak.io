@@ -396,7 +396,10 @@ export default function Transactions() {
     const despesa = transactions
       .filter((t) => t.type === "Gasto")
       .reduce((acc, t) => acc + Math.abs(t.value), 0);
-    const saldo = receita - despesa;
+    const investimento = transactions
+      .filter((t) => t.type === "Investimento")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const saldo = receita - despesa - investimento;
     return { saldo, receita, despesa };
   }, [transactions]);
 
@@ -513,7 +516,6 @@ export default function Transactions() {
                   <option value="Todos">Tipo</option>
                   <option value="Ganho">Ganho</option>
                   <option value="Gasto">Gasto</option>
-                  <option value="Investimento">Investimento</option>
                   <option value="Investimento">Investimento</option>
                 </select>
               </div>
