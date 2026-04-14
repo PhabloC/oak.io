@@ -4,7 +4,6 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import { supabase } from "../supabaseClient";
 import AccountInfoCard from "../components/Perfil/AccountInfoCard";
-import AchievementsSection from "../components/Perfil/AchievementsSection";
 import PreferencesCard from "../components/Perfil/PreferencesCard";
 import ProfileHero from "../components/Perfil/ProfileHero";
 import TimelineSection from "../components/Perfil/TimelineSection";
@@ -12,65 +11,11 @@ import {
   formatCurrency,
   formatDateShort,
   formatDateTime,
-  getMaxConsecutivePositiveMonths,
 } from "../utils/profile";
 
-const MILESTONES_PATRIMONIO = [1000, 5000, 10000, 50000, 100000, 500000];
 const PREFERENCES_STORAGE_KEY = "oakio.profile.preferences";
 
-const CONQUISTAS = [
-  {
-    id: "primeiro_investimento",
-    emoji: "PI",
-    label: "Primeiro investimento",
-    check: (data) => data.primeiroInvestimento,
-  },
-  {
-    id: "tres_meses_poupando",
-    emoji: "3M",
-    label: "3 meses poupando",
-    check: (data) => data.tresMesesPoupando,
-  },
-  {
-    id: "patrimonio_1k",
-    emoji: "R$",
-    label: "Patrimônio acima de R$ 1.000",
-    check: (data) => data.patrimonioMilestones >= 1000,
-  },
-  {
-    id: "patrimonio_5k",
-    emoji: "R$",
-    label: "Patrimônio acima de R$ 5.000",
-    check: (data) => data.patrimonioMilestones >= 5000,
-  },
-  {
-    id: "patrimonio_10k",
-    emoji: "R$",
-    label: "Patrimônio acima de R$ 10.000",
-    check: (data) => data.patrimonioMilestones >= 10000,
-  },
-  {
-    id: "patrimonio_50k",
-    emoji: "R$",
-    label: "Patrimônio acima de R$ 50.000",
-    check: (data) => data.patrimonioMilestones >= 50000,
-  },
-  {
-    id: "patrimonio_100k",
-    emoji: "R$",
-    label: "Patrimônio acima de R$ 100.000",
-    check: (data) => data.patrimonioMilestones >= 100000,
-  },
-  {
-    id: "meta_concluida",
-    emoji: "OK",
-    label: "Meta concluída",
-    check: (data) => data.metaConcluida,
-  },
-];
-
 const defaultPreferences = {
-  compactAchievements: true,
   showDetailedTimeline: true,
 };
 
@@ -147,7 +92,8 @@ export default function Perfil() {
         user.user_metadata?.name ||
         user.email?.split("@")[0] ||
         "",
-      avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+      avatarUrl:
+        user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
     });
   }, [user]);
 
@@ -160,7 +106,9 @@ export default function Perfil() {
     const [ativosRes, metasRes, txRes] = await Promise.all([
       supabase
         .from("ativos")
-        .select("id, nome, created_at, updated_at, valor_investido, valor_atual")
+        .select(
+          "id, nome, created_at, updated_at, valor_investido, valor_atual",
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: true }),
       supabase
@@ -179,9 +127,13 @@ export default function Perfil() {
     if (!metasRes.error) setMetas(metasRes.data || []);
     if (!txRes.error) setTransactions(txRes.data || []);
 
-    const hasError = [ativosRes.error, metasRes.error, txRes.error].some(Boolean);
+    const hasError = [ativosRes.error, metasRes.error, txRes.error].some(
+      Boolean,
+    );
     if (hasError) {
-      setProfileError("Não foi possível carregar todos os dados do perfil. Tente novamente.");
+      setProfileError(
+        "Não foi possível carregar todos os dados do perfil. Tente novamente.",
+      );
     }
 
     setLastSyncAt(new Date().toISOString());
@@ -239,33 +191,10 @@ export default function Perfil() {
     setPreferences((prev) => ({ ...prev, [field]: value }));
   };
 
-  const achievementData = useMemo(() => {
-    const patrimonioTotal = ativos.reduce((sum, ativo) => sum + Number(ativo.valor_atual || 0), 0);
-    const primeiroInvestimento = ativos.some((ativo) => Number(ativo.valor_investido || 0) > 0);
-    const metaConcluida = metas.some(
-      (meta) => Number(meta.current_value || 0) >= Number(meta.target_value || 0)
-    );
-
-    const maxConsecutivePositiveMonths = getMaxConsecutivePositiveMonths(transactions);
-    const patrimonioMilestones =
-      MILESTONES_PATRIMONIO.filter((milestone) => patrimonioTotal >= milestone).pop() || 0;
-
-    return {
-      primeiroInvestimento,
-      tresMesesPoupando: maxConsecutivePositiveMonths >= 3,
-      patrimonioMilestones,
-      metaConcluida,
-      patrimonioTotal,
-    };
-  }, [ativos, metas, transactions]);
-
-  const conquistas = useMemo(
+  const patrimonioTotal = useMemo(
     () =>
-      CONQUISTAS.map((item) => ({
-        ...item,
-        unlocked: item.check(achievementData),
-      })),
-    [achievementData]
+      ativos.reduce((sum, ativo) => sum + Number(ativo.valor_atual || 0), 0),
+    [ativos],
   );
 
   const timelineEventos = useMemo(() => {
@@ -280,7 +209,9 @@ export default function Perfil() {
       });
     }
 
-    const primeiroAtivo = ativos.find((ativo) => Number(ativo.valor_investido || 0) > 0);
+    const primeiroAtivo = ativos.find(
+      (ativo) => Number(ativo.valor_investido || 0) > 0,
+    );
     if (primeiroAtivo?.created_at) {
       eventos.push({
         id: "primeiro_investimento",
@@ -288,6 +219,19 @@ export default function Perfil() {
         date: primeiroAtivo.created_at,
         extra: primeiroAtivo.nome,
         icon: "AP",
+      });
+    }
+
+    const primeiraTransacao = [...transactions].sort(
+      (a, b) => new Date(a.date) - new Date(b.date),
+    )[0];
+    if (primeiraTransacao?.date) {
+      eventos.push({
+        id: "primeira_transacao",
+        label: "Primeira transação",
+        date: primeiraTransacao.date,
+        extra: primeiraTransacao.type,
+        icon: "TX",
       });
     }
 
@@ -303,10 +247,14 @@ export default function Perfil() {
     }
 
     const metasConcluidas = metas
-      .filter((meta) => Number(meta.current_value || 0) >= Number(meta.target_value || 0))
+      .filter(
+        (meta) =>
+          Number(meta.current_value || 0) >= Number(meta.target_value || 0),
+      )
       .sort(
         (a, b) =>
-          new Date(a.updated_at || a.created_at) - new Date(b.updated_at || b.created_at)
+          new Date(a.updated_at || a.created_at) -
+          new Date(b.updated_at || b.created_at),
       );
 
     const primeiraMetaConcluida = metasConcluidas[0];
@@ -314,7 +262,8 @@ export default function Perfil() {
       eventos.push({
         id: "meta_concluida",
         label: "Primeira meta concluída",
-        date: primeiraMetaConcluida.updated_at || primeiraMetaConcluida.created_at,
+        date:
+          primeiraMetaConcluida.updated_at || primeiraMetaConcluida.created_at,
         extra: primeiraMetaConcluida.title,
         icon: "MC",
       });
@@ -323,7 +272,8 @@ export default function Perfil() {
     const maiorLucro = ativos
       .map((ativo) => ({
         ativo,
-        lucro: Number(ativo.valor_atual || 0) - Number(ativo.valor_investido || 0),
+        lucro:
+          Number(ativo.valor_atual || 0) - Number(ativo.valor_investido || 0),
       }))
       .filter((item) => item.lucro > 0)
       .sort((a, b) => b.lucro - a.lucro)[0];
@@ -339,7 +289,7 @@ export default function Perfil() {
     }
 
     return eventos.sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [user?.created_at, ativos, metas]);
+  }, [user?.created_at, ativos, metas, transactions]);
 
   const userName =
     user?.user_metadata?.full_name ||
@@ -360,8 +310,6 @@ export default function Perfil() {
     );
   }
 
-  const unlockedCount = conquistas.filter((item) => item.unlocked).length;
-
   return (
     <div className="flex min-h-screen text-white">
       <Sidebar
@@ -369,10 +317,10 @@ export default function Perfil() {
         onClose={() => setIsMobileMenuOpen(false)}
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
         <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
 
-        <main className="mx-auto w-full max-w-7xl px-4 pb-10 pt-6 md:ml-28 md:px-6">
+        <main className="box-border w-full min-w-0 px-4 pb-10 pt-6 md:pl-28 md:pr-6">
           <ProfileHero
             userName={userName}
             userEmail={user?.email || "Email não informado"}
@@ -382,9 +330,7 @@ export default function Perfil() {
             onSaveProfile={handleSaveProfile}
             savingProfile={savingProfile}
             saveMessage={saveMessage}
-            unlockedAchievements={unlockedCount}
-            totalAchievements={conquistas.length}
-            patrimonioTotal={formatCurrency(achievementData.patrimonioTotal)}
+            patrimonioTotal={formatCurrency(patrimonioTotal)}
           />
 
           {profileError && (
@@ -413,11 +359,7 @@ export default function Perfil() {
             />
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_1fr]">
-            <AchievementsSection
-              achievements={conquistas}
-              compact={preferences.compactAchievements}
-            />
+          <div className="mt-4">
             <TimelineSection
               events={timelineEventos}
               formatDate={formatDateShort}
@@ -426,7 +368,11 @@ export default function Perfil() {
           </div>
 
           {dataLoading && (
-            <p className="mt-4 text-sm text-cyan-200" role="status" aria-live="polite">
+            <p
+              className="mt-4 text-sm text-cyan-200"
+              role="status"
+              aria-live="polite"
+            >
               Sincronizando dados do perfil...
             </p>
           )}
@@ -435,4 +381,3 @@ export default function Perfil() {
     </div>
   );
 }
-

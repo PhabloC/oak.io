@@ -1,4 +1,4 @@
-﻿import { FaSlidersH } from "react-icons/fa";
+import { FaSlidersH } from "react-icons/fa";
 
 const Toggle = ({ id, checked, onChange, label, description }) => (
   <label
@@ -32,14 +32,6 @@ export default function PreferencesCard({ preferences, onPreferenceChange }) {
       </h2>
 
       <div className="space-y-3">
-        <Toggle
-          id="compact-achievements"
-          checked={preferences.compactAchievements}
-          onChange={(value) => onPreferenceChange("compactAchievements", value)}
-          label="Conquistas compactas"
-          description="Mostra mais itens por linha na grade de conquistas."
-        />
-
         <Toggle
           id="detailed-timeline"
           checked={preferences.showDetailedTimeline}

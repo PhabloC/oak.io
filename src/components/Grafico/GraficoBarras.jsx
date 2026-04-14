@@ -136,7 +136,8 @@ export default function GraficoBarras({ selectedMonth, selectedYear, transaction
 
   const totalReceita = chartData.reduce((acc, d) => acc + d.receita, 0);
   const totalDespesa = chartData.reduce((acc, d) => acc + d.despesa, 0);
-  const saldo = totalReceita - totalDespesa;
+  const totalInvestimento = chartData.reduce((acc, d) => acc + d.investimento, 0);
+  const saldo = totalReceita - totalDespesa - totalInvestimento;
   const trendText =
     saldo >= 0
       ? `Saldo positivo de ${formatCurrency(saldo)} no período`
