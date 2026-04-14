@@ -5,16 +5,14 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Cards from "../components/Cards/Cards";
 import Quadro from "../components/Quadro/Quadro";
+import QuadroInsights from "../components/Quadro/QuadroInsights";
 import { BsDatabaseFillAdd } from "react-icons/bs";
 import ModalTransacao from "../components/Modal/ModalTransacao";
 import { useTransactions } from "../context/TransactionsContext";
 import { useYear } from "../context/YearContext";
 import GraficoBarras from "../components/Grafico/GraficoBarras";
 import GraficoPizza from "../components/Grafico/GraficoPizza";
-import {
-  applyMonthOrRecurringFilter,
-  transactionMatchesMonth,
-} from "../utils/transactions";
+import { transactionMatchesMonth } from "../utils/transactions";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -68,8 +66,8 @@ export default function Dashboard() {
   const showSidebar =
     location.pathname === "/dashboard" || location.pathname === "/transacoes";
 
-  // Função para carregar transações do Supabase
-  const loadTransactions = async (month, year) => {
+  // Carrega o ano inteiro: cards/quadro filtram pelo mês no cliente; gráficos "Todos" somam todos os meses.
+  const loadTransactions = async (year) => {
     try {
       const {
         data: { user },
@@ -83,12 +81,10 @@ export default function Dashboard() {
       const startDate = `${year}-01-01`;
       const endDate = `${year}-12-31`;
 
-      let txQuery = supabase
+      const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .eq("user_id", user.id);
-      txQuery = applyMonthOrRecurringFilter(txQuery, month);
-      const { data, error } = await txQuery
+        .eq("user_id", user.id)
         .gte("date", startDate)
         .lte("date", endDate)
         .order("date", { ascending: true });
@@ -117,16 +113,18 @@ export default function Dashboard() {
     const despesa = filteredTransactions
       .filter((t) => t.type === "Gasto")
       .reduce((acc, t) => acc + Math.abs(t.value), 0);
-    const saldo = receita - despesa;
+    const investimento = filteredTransactions
+      .filter((t) => t.type === "Investimento")
+      .reduce((acc, t) => acc + Math.abs(t.value), 0);
+    const saldo = receita - despesa - investimento;
 
     return { saldo, receita, despesa };
   };
 
-  // Atualiza os dados do Dashboard sempre que as transações, mês ou ano mudarem
   useEffect(() => {
-    loadTransactions(selectedMonth, selectedYear);
+    loadTransactions(selectedYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonth, selectedYear]);
+  }, [selectedYear]);
 
   useEffect(() => {
     const data = calculateDashboardData(transactions, selectedMonth);
@@ -257,8 +255,12 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-            <div className="w-full lg:w-auto">
+            <div className="flex w-full flex-col gap-6 lg:w-auto">
               <Quadro selectedMonth={selectedMonth} />
+              <QuadroInsights
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+              />
             </div>
           </div>
         </div>
