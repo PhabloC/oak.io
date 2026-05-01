@@ -1,5 +1,6 @@
 import { BsBoxArrowUpRight } from "react-icons/bs";
 import { FaTrash, FaCheck } from "react-icons/fa";
+import { getTransactionPaidStatus } from "../../utils/transactions";
 
 const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -7,7 +8,7 @@ const formatDate = (dateString) => {
   return `${day}/${month}/${year}`;
 };
 
-export default function TransactionsTable({ transactions, onEdit, onDelete, onTogglePaga }) {
+export default function TransactionsTable({ transactions, selectedMonth, onEdit, onDelete, onTogglePaga }) {
   const getTypeBadgeClass = (type) => {
     switch (type) {
       case "Ganho":
@@ -51,7 +52,9 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
     <>
       {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-3">
-        {transactions.map((transaction, index) => (
+        {transactions.map((transaction, index) => {
+          const isPaid = getTransactionPaidStatus(transaction, selectedMonth);
+          return (
           <div
             key={transaction.id}
             className="bg-gradient-to-br from-gray-800/40 via-gray-800/30 to-gray-800/40 backdrop-blur-md rounded-xl border border-indigo-500/20 p-4 shadow-lg"
@@ -108,13 +111,13 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
               )}
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold border ${
-                  transaction.paga
+                  isPaid
                     ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-300 border-emerald-500/30"
                     : "bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-300 border-orange-500/30"
                 }`}
               >
-                {transaction.paga && <FaCheck className="text-[10px]" />}
-                {transaction.paga ? "Paga" : "Em aberto"}
+                {isPaid && <FaCheck className="text-[10px]" />}
+                {isPaid ? "Paga" : "Em aberto"}
               </span>
             </div>
 
@@ -122,11 +125,11 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
               <button
                 onClick={() => onTogglePaga(transaction)}
                 className={`p-2 rounded-lg border transition-all duration-200 ${
-                  transaction.paga
+                  isPaid
                     ? "bg-emerald-600/20 hover:bg-emerald-600/40 border-emerald-500/30 text-emerald-400"
                     : "bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 text-orange-400"
                 }`}
-                title={transaction.paga ? "Marcar como em aberto" : "Marcar como paga"}
+                title={isPaid ? "Marcar como em aberto" : "Marcar como paga"}
               >
                 <FaCheck className="text-sm" />
               </button>
@@ -146,7 +149,8 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Desktop Table */}
@@ -181,7 +185,9 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700/30">
-            {transactions.map((transaction, index) => (
+            {transactions.map((transaction, index) => {
+              const isPaid = getTransactionPaidStatus(transaction, selectedMonth);
+              return (
               <tr
                 key={transaction.id}
                 className="bg-gray-800/20 hover:bg-gradient-to-r hover:from-indigo-900/20 hover:via-purple-900/20 hover:to-indigo-900/20 transition-all duration-200 group border-b border-gray-700/20"
@@ -230,13 +236,13 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-center">
                   <span
                     className={`inline-flex items-center gap-1.5 px-2 lg:px-3 py-1 rounded-lg text-xs lg:text-sm font-semibold border ${
-                      transaction.paga
+                      isPaid
                         ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-300 border-emerald-500/30"
                         : "bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-300 border-orange-500/30"
                     }`}
                   >
-                    {transaction.paga && <FaCheck className="text-xs" />}
-                    {transaction.paga ? "Paga" : "Em aberto"}
+                    {isPaid && <FaCheck className="text-xs" />}
+                    {isPaid ? "Paga" : "Em aberto"}
                   </span>
                 </td>
                 <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right">
@@ -259,11 +265,11 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
                     <button
                       onClick={() => onTogglePaga(transaction)}
                       className={`p-2 rounded-lg border transition-all duration-200 hover:scale-110 ${
-                        transaction.paga
+                        isPaid
                           ? "bg-emerald-600/20 hover:bg-emerald-600/40 border-emerald-500/30 hover:border-emerald-400/50 text-emerald-400 hover:text-emerald-300"
                           : "bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400/50 text-orange-400 hover:text-orange-300"
                       }`}
-                      title={transaction.paga ? "Marcar como em aberto" : "Marcar como paga"}
+                      title={isPaid ? "Marcar como em aberto" : "Marcar como paga"}
                     >
                       <FaCheck className="text-sm lg:text-base" />
                     </button>
@@ -284,7 +290,8 @@ export default function TransactionsTable({ transactions, onEdit, onDelete, onTo
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

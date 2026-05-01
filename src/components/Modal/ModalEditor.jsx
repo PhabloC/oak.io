@@ -125,7 +125,7 @@ export default function ModalEditor({
 
   const handleDeleteTransaction = async () => {
     try {
-      await onDelete(transaction.id);
+      await onDelete(transaction);
       onClose();
     } catch (error) {
       console.error("Erro ao deletar transação:", error);

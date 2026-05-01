@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTransactions } from "../../context/TransactionsContext";
-import { transactionMatchesMonth } from "../../utils/transactions";
+import {
+  getTransactionPaidStatus,
+  transactionMatchesMonth,
+} from "../../utils/transactions";
 
 const MONTHS = [
   "Janeiro",
@@ -74,9 +77,10 @@ export default function QuadroInsights({ selectedMonth, selectedYear }) {
   const emAberto = useMemo(() => {
     return filteredTransactions.filter(
       (t) =>
-        (t.type === "Gasto" || t.type === "Investimento") && !t.paga,
+        (t.type === "Gasto" || t.type === "Investimento") &&
+        !getTransactionPaidStatus(t, selectedMonth),
     );
-  }, [filteredTransactions]);
+  }, [filteredTransactions, selectedMonth]);
 
   const comparativoGastos = useMemo(() => {
     const gastosAtual = filteredTransactions
