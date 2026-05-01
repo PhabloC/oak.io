@@ -12,7 +12,13 @@ import { useTransactions } from "../context/TransactionsContext";
 import { useYear } from "../context/YearContext";
 import TransactionsTable from "../components/Table/TransactionsTable";
 import { getAllCategories } from "../utils/categories";
-import { applyMonthOrRecurringFilter } from "../utils/transactions";
+import {
+  applyMonthOrRecurringFilter,
+  getTransactionPaidStatus,
+  setRecurringMonthExcludedStatus,
+  setRecurringMonthPaidStatus,
+  transactionMatchesMonth,
+} from "../utils/transactions";
 import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 
 export default function Transactions() {
@@ -127,7 +133,9 @@ export default function Transactions() {
         return;
       }
 
-      const loadedTransactions = (data || []).map((row) => {
+      const loadedTransactions = (data || [])
+        .filter((row) => transactionMatchesMonth(row, month))
+        .map((row) => {
         if (row.todos_meses) return row;
         const dateMonth = getMonthName(row.date);
         const capitalizedDateMonth =
@@ -266,6 +274,76 @@ export default function Transactions() {
     }
   };
 
+  const handleDeleteCurrentMonthTransaction = async (transaction) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const updatedExcludedMonths = setRecurringMonthExcludedStatus(
+        transaction,
+        selectedMonth,
+        true
+      );
+
+      const { error } = await supabase
+        .from("transactions")
+        .update({ excluido_meses: updatedExcludedMonths })
+        .eq("id", transaction.id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Erro ao excluir transação do mês vigente:", error);
+        return;
+      }
+
+      setTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
+      setTransactionToDelete(null);
+      setShowConfirmModal(false);
+      setSuccessMessage(`Transação removida de ${selectedMonth} com sucesso!`);
+      setTimeout(() => setSuccessMessage(""), 3000);
+
+      const remainingTransactions = transactions.filter(
+        (t) => t.id !== transaction.id
+      );
+      const updatedFilteredTransactions = remainingTransactions.filter((t) => {
+        if (searchTerm) {
+          const searchLower = searchTerm.toLowerCase();
+          const matchesSearch =
+            t.title?.toLowerCase().includes(searchLower) ||
+            t.description?.toLowerCase().includes(searchLower);
+          if (!matchesSearch) return false;
+        }
+        if (filterType !== "Todos" && t.type !== filterType) return false;
+        if (filterCategory !== "Todas") {
+          if (!t.category || t.category !== filterCategory) return false;
+        }
+        if (filterMethod !== "Todos" && t.method !== filterMethod) return false;
+        if (filterStatus !== "Todos") {
+          const isPaid = getTransactionPaidStatus(t, selectedMonth);
+          if (filterStatus === "Paga" && !isPaid) return false;
+          if (filterStatus === "Em aberto" && isPaid) return false;
+        }
+        if (minValue && t.value < parseFloat(minValue)) return false;
+        if (maxValue && t.value > parseFloat(maxValue)) return false;
+        return true;
+      });
+      const totalPagesAfterDelete = Math.ceil(
+        updatedFilteredTransactions.length / itemsPerPage
+      );
+      if (currentPage > totalPagesAfterDelete) {
+        setCurrentPage(totalPagesAfterDelete || 1);
+      }
+    } catch (error) {
+      console.error("Erro ao excluir transação do mês vigente:", error);
+    }
+  };
+
   const handleOpenConfirmModal = (transaction) => {
     setTransactionToDelete(transaction);
     setShowConfirmModal(true);
@@ -287,11 +365,21 @@ export default function Transactions() {
         return;
       }
 
-      const newPaga = !transaction.paga;
+      const currentPaidStatus = getTransactionPaidStatus(transaction, selectedMonth);
+      const newPaga = !currentPaidStatus;
+      const updatePayload = transaction.todos_meses
+        ? {
+            paga_meses: setRecurringMonthPaidStatus(
+              transaction,
+              selectedMonth,
+              newPaga
+            ),
+          }
+        : { paga: newPaga };
 
       const { error } = await supabase
         .from("transactions")
-        .update({ paga: newPaga })
+        .update(updatePayload)
         .eq("id", transaction.id)
         .eq("user_id", user.id);
 
@@ -302,7 +390,18 @@ export default function Transactions() {
 
       setTransactions((prev) =>
         prev.map((t) =>
-          t.id === transaction.id ? { ...t, paga: newPaga } : t
+          t.id === transaction.id
+            ? transaction.todos_meses
+              ? {
+                  ...t,
+                  paga_meses: setRecurringMonthPaidStatus(
+                    t,
+                    selectedMonth,
+                    newPaga
+                  ),
+                }
+              : { ...t, paga: newPaga }
+            : t
         )
       );
     } catch (error) {
@@ -340,8 +439,9 @@ export default function Transactions() {
 
     // Status filter (paga/em aberto)
     if (filterStatus !== "Todos") {
-      if (filterStatus === "Paga" && !transaction.paga) return false;
-      if (filterStatus === "Em aberto" && transaction.paga) return false;
+      const isPaid = getTransactionPaidStatus(transaction, selectedMonth);
+      if (filterStatus === "Paga" && !isPaid) return false;
+      if (filterStatus === "Em aberto" && isPaid) return false;
     }
 
     // Value range filters
@@ -602,6 +702,7 @@ export default function Transactions() {
 
           <TransactionsTable
             transactions={currentTransactions}
+            selectedMonth={selectedMonth}
             onEdit={handleOpenEditor}
             onDelete={handleOpenConfirmModal}
             onTogglePaga={handleTogglePaga}
@@ -668,15 +769,20 @@ export default function Transactions() {
         <ModalEditor
           transaction={selectedTransaction}
           onClose={handleCloseEditor}
-          onDelete={handleDeleteTransaction}
+          onDelete={handleOpenConfirmModal}
           onSave={handleUpdateTransaction}
         />
       )}
 
       {showConfirmModal && (
         <ModalDeleted
+          transaction={transactionToDelete}
+          selectedMonth={selectedMonth}
           onClose={handleCloseConfirmModal}
           onDelete={() => handleDeleteTransaction(transactionToDelete.id)}
+          onDeleteCurrentMonth={() =>
+            handleDeleteCurrentMonthTransaction(transactionToDelete)
+          }
         />
       )}
     </div>
